@@ -1,0 +1,67 @@
+
+
+Insurance 
+├── flask_app/
+│   ├── __init__.py
+│   ├── models/
+│   │   ├── __init__.py
+|   |   |-- auth.py  
+│   │   ├── client.py
+│   │   ├── claim.py
+│   │   ├── policy.py
+│   │   ├── statistics.py
+│   ├── controllers/
+│   │   ├── __init__.py
+│   │   ├── auth_controller.py
+│   │   ├── client_controller.py
+│   │   ├── claim_controller.py
+│   │   ├── policy_controller.py
+│   │   ├── stats_controller.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   ├── styles.css
+│   │   ├── images/
+│   │   │   ├── background.jpg
+│   │   │   ├── favicon.ico
+│   │   ├── js/
+│   │   │   ├── charts.js
+│   │   │   ├── foos.js
+│   ├── templates/
+│   │   ├── auth/
+│   │   │   ├── apology.html
+│   │   │   ├── edit_password.html
+│   │   │   ├── login.html
+│   │   │   ├── register.html
+│   │   ├── claims/
+│   │   │   ├── claims.html
+│   │   │   ├── claim_details.html
+│   │   │   ├── add_claim.html
+│   │   │   ├── edit_claim.html
+│   │   ├── clients/
+│   │   │   ├── client_details.html
+│   │   │   ├── add_client.html
+│   │   │   ├── clients.html
+│   │   │   ├── edit_client.html
+│   │   ├── policies/
+│   │   │   ├── policy_details.html
+│   │   │   ├── add_policy.html
+│   │   │   ├── edit_policy.html
+│   │   ├── claims/
+│   │   │   ├── claim_details.html
+│   │   │   ├── add_claim.html
+│   │   │   ├── policies.html
+│   │   │   ├── edit_claim.html
+│   │   ├── stats/
+│   │   │   ├── client_stats.html
+│   │   │   ├── stats.html
+│   │   ├── layout.html
+│   │   ├── welcome.html
+│   ├── insurance.db
+│   ├── schema.sql
+│   ├── config.py
+├── run.py
+├── requirements.txt
+├── README.md
+├── structure.txt
+
+
