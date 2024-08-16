@@ -35,11 +35,11 @@ Password: admin
 ########################################
 POTENTIAL IMPROVEMENTS
 ########################################
-
 - Add breadcrumbs for easier navigation
 - Implement a search window
 - Add pagination
 - Normalize the client table into three separate tables (active, expired, renewed) & apply triggers to dynamically update those tables
+- Add tests
 
 
 ########################################
