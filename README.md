@@ -42,7 +42,7 @@ source .venv/bin/activate
 ```bash
 pip install -r requirements.txt  
 ```
-### 4. Create the database (if not using the demo)
+### 4. Create the database OPTIONAL (demo db is included!) 
 ```bash
 sqlite3 insurance.db    
 ```
