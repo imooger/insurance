@@ -28,12 +28,29 @@
 
 ## How to Run
 To run the insur⟑nce application, open your terminal and type:
+
+### 1. Create the virtual environment
 ```bash
-python run.py
+python -m venv .venv      
 ```
+### 2. Activate the environment
 
-This command will start the server, and you can access the application in your web browser.
-
+```bash
+source .venv/bin/activate 
+```
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt  
+```
+### 4. Create the database (if not using the demo)
+```bash
+sqlite3 insurance.db    
+```
+### 5. Start the server
+```bash
+python run.py  	     
+```
+These command will create your environment, db (if needed) and start the server, and you can access the application in your web browser.
 
 # Quick start
 
