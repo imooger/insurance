@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_app.models import get_db_connection
-from flask_app.models.auth import User
+from flask_app.models.auth import RegistrationService, UserService, AuthService
 
 auth_bp = Blueprint("auth_bp", __name__)
 
@@ -76,7 +76,7 @@ def register():
         zip_ = request.form.get("zip")
         photo = "https://i.pinimg.com/236x/c9/f7/d6/c9f7d650ce2a7f0f63ee7b1691694229.jpg"
 
-        error, user_id = User.register(
+        error, user_id = RegistrationService.register(
             email, password, first_name, last_name, date_of_birth, phone, street, city, state, zip_, photo
         )
 
@@ -104,7 +104,7 @@ def login():
         if not email or not password:
             return apology("Must provide email and password", 403)
 
-        user = User.login(email, password)
+        user = AuthService.login(email, password)
 
         if not user:
             return apology("Invalid email and/or password", 403)
@@ -116,7 +116,7 @@ def login():
 
 @auth_bp.route("/logout")
 def logout():
-    User.logout()
+    AuthService.logout()
     return redirect("/")
 
 

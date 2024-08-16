@@ -2,8 +2,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import session, request
 from . import get_db_connection
 
-
-class User:
+# Handles User authentication processes like login, logout and session management
+class AuthService:
     @staticmethod
     def login(email, password):
         with get_db_connection() as conn:
@@ -30,6 +30,14 @@ class User:
             session["photo"] = row["photo"]
             return row
 
+    @staticmethod
+    def logout():
+        # No need for database interaction in logout, just clear session
+        session.clear()
+
+
+# Handles User registration process including validation and setting sessions
+class RegistrationService:
     @staticmethod
     def register(
         email,
@@ -100,8 +108,9 @@ class User:
         finally:
             conn.close()
 
-    
 
+# Handles User data related operations like retrieving, updating, and deleting user data
+class UserService:
     @staticmethod
     def get_user_by_email(email):
         with get_db_connection() as conn:
@@ -129,9 +138,3 @@ class User:
         )
         conn.commit()
         conn.close()
-
-
-    @staticmethod
-    def logout():
-        # No need for database interaction in logout, just clear session
-        session.clear()

@@ -3,7 +3,10 @@ from flask_app.models.statistics import Statistics
 from datetime import datetime, date, timedelta
 
 
-class Client:
+class ClientManager:
+    """
+    Class responsible for client-related operations.
+    """
     
     @staticmethod
     def get_all_clients(order_by="first_name", order_dir="asc"):
@@ -52,7 +55,6 @@ class Client:
             ).fetchone()
         return client
 
-
     @staticmethod
     def add_client(first_name, last_name, date_of_birth, email, phone, street, city, state, zip_, photo_link):
         with get_db_connection() as conn:
@@ -61,7 +63,6 @@ class Client:
                 (first_name, last_name, date_of_birth, email, phone, street, city, state, zip_, photo_link),
             )
             conn.commit()
-
 
     @staticmethod
     def update_client(client_id, first_name, last_name, date_of_birth, email, phone, street, city, state, zip_, photo):
@@ -72,24 +73,19 @@ class Client:
             )
             conn.commit()
 
-
     @staticmethod
     def delete_client(client_id):
+        PolicyManager.delete_policies_by_client(client_id)
         with get_db_connection() as conn:
-            policies = conn.execute(
-                "SELECT policy_id FROM insurance_policies WHERE client_id = ?", (client_id,)
-            ).fetchall()
-
-            for policy in policies:
-                policy_id = policy["policy_id"]
-                # Delete claims associated with each policy
-                conn.execute("DELETE FROM claims WHERE policy_id = ?", (policy_id,))
-            
-            conn.execute("DELETE FROM insurance_policies WHERE client_id = ?", (client_id,))
             conn.execute("DELETE FROM clients WHERE client_id = ?", (client_id,))
-            
             conn.commit()
 
+
+class PolicyManager:
+    """
+    Class responsible for policy-related operations.
+    """
+    
     @staticmethod
     def renew_policy(policy_id):
         with get_db_connection() as conn:
@@ -102,21 +98,45 @@ class Client:
     @staticmethod
     def get_sum_of_earned_premiums_by_client_id(client_id):
         with get_db_connection() as conn:
-            # Get all policies of the given client
             policies = conn.execute(
                 "SELECT policy_id FROM insurance_policies WHERE client_id = ? AND status == 'Approved'",
                 (client_id,)
             ).fetchall()
 
-        total_earned_premiums = 0
-        # Calculating the earned premium for each policy and sum them up
-        for policy in policies:
-            policy_id = policy['policy_id']
-            total_earned_premiums += Statistics.get_premium_for_policy(policy_id)
+        total_earned_premiums = sum(
+            Statistics.get_premium_for_policy(policy['policy_id']) for policy in policies
+        )
 
         return total_earned_premiums
 
-    # sum of earned premiums for each polici in client details
+    @staticmethod
+    def get_number_of_active_policies(client_id):
+        with get_db_connection() as conn:
+            count = conn.execute(
+                "SELECT COUNT(*) FROM insurance_policies WHERE client_id = ? AND end_date > ? AND status == 'Approved'",
+                (client_id, datetime.now().date())
+            ).fetchone()[0]
+        return count or 0
+
+    @staticmethod
+    def get_number_of_expired_policies(client_id):
+        with get_db_connection() as conn:
+            count = conn.execute(
+                "SELECT COUNT(*) FROM insurance_policies WHERE client_id = ? AND end_date <= ? And status = 'Approved'",
+                (client_id, datetime.now().date())
+            ).fetchone()[0]
+        return count or 0
+
+    @staticmethod
+    def get_premium_per_month_on_active_policies(client_id):
+        with get_db_connection() as conn:
+            premium_per_month = conn.execute(
+                "SELECT SUM(premium_amount) FROM insurance_policies WHERE client_id = ? AND end_date > ? AND status == 'Approved'",
+                (client_id, datetime.now().date())
+            ).fetchone()[0]
+        return premium_per_month or 0
+
+    # sum of earned premiums for each policy in client details
     @staticmethod
     def get_premium_for_policy(policy_id):
         with get_db_connection() as conn:
@@ -155,43 +175,6 @@ class Client:
 
         return 0
 
-    @staticmethod
-    def get_total_claims_by_client_id(client_id):
-        with get_db_connection() as conn:
-            total_claims = conn.execute(
-                "SELECT SUM(claim_amount) FROM claims WHERE policy_id IN (SELECT policy_id FROM insurance_policies WHERE client_id = ?) AND status == 'Paid'", 
-                (client_id,)
-            ).fetchone()[0]
-        return total_claims or 0
-
-    @staticmethod
-    def get_number_of_active_policies(client_id):
-        with get_db_connection() as conn:
-            count = conn.execute(
-                "SELECT COUNT(*) FROM insurance_policies WHERE client_id = ? AND end_date > ? AND status == 'Approved'",
-                (client_id, datetime.now().date())
-            ).fetchone()[0]
-        return count or 0
-
-    @staticmethod
-    def get_number_of_expired_policies(client_id):
-        with get_db_connection() as conn:
-            count = conn.execute(
-                "SELECT COUNT(*) FROM insurance_policies WHERE client_id = ? AND end_date <= ? And status = 'Approved'",
-                (client_id, datetime.now().date())
-            ).fetchone()[0]
-        return count or 0
-
-    @staticmethod
-    def get_premium_per_month_on_active_policies(client_id):
-        with get_db_connection() as conn:
-            premium_per_month = conn.execute(
-                "SELECT SUM(premium_amount) FROM insurance_policies WHERE client_id = ? AND end_date > ? AND status == 'Approved'",
-                (client_id, datetime.now().date())
-            ).fetchone()[0]
-        return premium_per_month or 0
-
-
     @staticmethod    
     def get_policies_with_claim_counts(client_id):
         with get_db_connection() as conn:
@@ -206,17 +189,41 @@ class Client:
         return policies
 
     @staticmethod
+    def delete_policies_by_client(client_id):
+        with get_db_connection() as conn:
+            policies = conn.execute(
+                "SELECT policy_id FROM insurance_policies WHERE client_id = ?", (client_id,)
+            ).fetchall()
+
+            for policy in policies:
+                ClaimsManager.delete_claims_by_policy(policy["policy_id"])
+            
+            conn.execute("DELETE FROM insurance_policies WHERE client_id = ?", (client_id,))
+            conn.commit()
+
+    @staticmethod
     def is_policy_ending_within_a_week(end_date):
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
         today = datetime.today().date()
         return today <= end_date_obj <= (today + timedelta(days=7))
 
 
-
-
+class ClaimsManager:
+    """
+    Class responsible for claim-related operations.
+    """
     
+    @staticmethod
+    def delete_claims_by_policy(policy_id):
+        with get_db_connection() as conn:
+            conn.execute("DELETE FROM claims WHERE policy_id = ?", (policy_id,))
+            conn.commit()
 
-
-
-
-
+    @staticmethod
+    def get_total_claims_by_client_id(client_id):
+        with get_db_connection() as conn:
+            total_claims = conn.execute(
+                "SELECT SUM(claim_amount) FROM claims WHERE policy_id IN (SELECT policy_id FROM insurance_policies WHERE client_id = ?) AND status == 'Paid'", 
+                (client_id,)
+            ).fetchone()[0]
+        return total_claims or 0

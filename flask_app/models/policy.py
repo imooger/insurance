@@ -1,8 +1,8 @@
 from . import get_db_connection
-from datetime import date, timedelta,datetime
+from datetime import date, timedelta, datetime
 
-
-class Policy:
+# Handles retrieval and management of policies
+class PolicyService:
 
     @staticmethod
     def get_all_policies_for_admin(order_by="end_date", order_dir="asc"):
@@ -45,7 +45,6 @@ class Policy:
             ).fetchall()
         return policies
 
-
     @staticmethod
     def get_policy_by_id(policy_id):
         with get_db_connection() as conn:
@@ -62,16 +61,6 @@ class Policy:
         return policy
 
     @staticmethod
-    def get_last_policy_id():
-        with get_db_connection() as conn:
-            last_policy = conn.execute(
-                "SELECT policy_id FROM insurance_policies ORDER BY policy_id DESC LIMIT 1"
-            ).fetchone()
-            if last_policy:
-                return last_policy["policy_id"]
-            return None
-
-    @staticmethod
     def get_policies_by_client_id(client_id):
         with get_db_connection() as conn:
             policies = conn.execute(
@@ -84,23 +73,9 @@ class Policy:
             ).fetchall()
         return policies
 
-    @staticmethod
-    def get_claims_by_policy_id(policy_id, order_by="claim_date", order_dir="asc"):
-        with get_db_connection() as conn:
-            if order_by == "claim_amount":
-                order_by_clause = f"CAST({order_by} AS FLOAT) {order_dir}"
-            else:
-                order_by_clause = f"{order_by} {order_dir}"
-            claims = conn.execute(
-                f"""
-                SELECT * FROM claims 
-                WHERE policy_id = ?
-                ORDER BY {order_by_clause}
-                """,
-                (policy_id,)
-            ).fetchall()
-        return claims
 
+# Handles creation, updates, deletion, and renewal of policies
+class PolicyManagementService:
 
     @staticmethod
     def add_policy(client_id, policy_number, policy_type, start_date, end_date, premium_amount, status):
@@ -117,7 +92,7 @@ class Policy:
         conn.close()
 
     @staticmethod
-    def update_policy(policy_id, policy_number, policy_type, start_date, end_date, premium_amount,renewed,status):
+    def update_policy(policy_id, policy_number, policy_type, start_date, end_date, premium_amount, renewed, status):
         with get_db_connection() as conn:
             # Fetching the existing policy to preserve the renewed count
             existing_policy = conn.execute(
@@ -163,7 +138,6 @@ class Policy:
             )
             conn.commit()
 
-
     @staticmethod
     def renew_policy(policy_id):
         with get_db_connection() as conn:
@@ -187,7 +161,7 @@ class Policy:
             status = "Approved" 
 
             # Inserting the new policy into the database
-            Policy.add_policy(
+            PolicyManagementService.add_policy(
                 client_id, policy_number, policy_type, start_date, end_date, premium_amount, status
             )
 
@@ -204,4 +178,32 @@ class Policy:
             conn.commit()
 
 
-    
+# Handles claims-related operations
+class ClaimsService:
+
+    @staticmethod
+    def get_claims_by_policy_id(policy_id, order_by="claim_date", order_dir="asc"):
+        with get_db_connection() as conn:
+            if order_by == "claim_amount":
+                order_by_clause = f"CAST({order_by} AS FLOAT) {order_dir}"
+            else:
+                order_by_clause = f"{order_by} {order_dir}"
+            claims = conn.execute(
+                f"""
+                SELECT * FROM claims 
+                WHERE policy_id = ?
+                ORDER BY {order_by_clause}
+                """,
+                (policy_id,)
+            ).fetchall()
+        return claims
+
+    @staticmethod
+    def get_last_policy_id():
+        with get_db_connection() as conn:
+            last_policy = conn.execute(
+                "SELECT policy_id FROM insurance_policies ORDER BY policy_id DESC LIMIT 1"
+            ).fetchone()
+            if last_policy:
+                return last_policy["policy_id"]
+            return None

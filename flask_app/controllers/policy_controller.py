@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_app.models import get_db_connection
-from flask_app.models.policy import Policy
-from flask_app.models.client import Client
-from flask_app.models.claim import Claim
+from flask_app.models.policy import PolicyService,ClaimsService,PolicyManagementService
+from flask_app.models.client import PolicyManager
+from flask_app.models.claim import ClaimModification, ClaimRetrieval
 from flask_app.models.statistics import Statistics
 from flask_app.controllers.auth_controller import login_required, admin_required
 from datetime import datetime, timedelta
@@ -22,15 +22,15 @@ def policies():
     current_year = datetime.now().year
 
     if user_role == "administrator":
-        policies = [dict(policy) for policy in Policy.get_all_policies_for_admin()]
+        policies = [dict(policy) for policy in PolicyService.get_all_policies_for_admin()]
     elif user_role == "insured":
-        policies = [dict(policy) for policy in Policy.get_policies_for_insured(user_email)]
+        policies = [dict(policy) for policy in PolicyService.get_policies_for_insured(user_email)]
     else:
         flash("Unauthorized access", "danger")
         return redirect(url_for("index"))
 
     for policy in policies:
-        policy['total_premium'] = float(Client.get_premium_for_policy(policy['policy_id']))
+        policy['total_premium'] = float(PolicyManager.get_premium_for_policy(policy['policy_id']))
     policies.sort(key=lambda x: x['total_premium'] if order_by == "total_premium" else x.get(order_by, ""), reverse=reverse)
 
     if user_role == "administrator":
@@ -49,20 +49,20 @@ def policies():
             "expired_policy_count": expired_count,
         }
 
-        return render_template("policies/policies.html", policies=policies, stats=stats, order_by=order_by, order_dir=order_dir, is_policy_ending_within_a_week=Client.is_policy_ending_within_a_week)
+        return render_template("policies/policies.html", policies=policies, stats=stats, order_by=order_by, order_dir=order_dir, is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week)
 
-    return render_template("policies/policies.html", policies=policies, order_by=order_by, order_dir=order_dir, is_policy_ending_within_a_week=Client.is_policy_ending_within_a_week)
+    return render_template("policies/policies.html", policies=policies, order_by=order_by, order_dir=order_dir, is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week)
 
 
 
 @policy_bp.route("/policy/<int:policy_id>", methods=["GET"])
 @login_required
 def policy_details(policy_id):
-    policy = Policy.get_policy_by_id(policy_id)
+    policy = PolicyService.get_policy_by_id(policy_id)
     if not policy:
         abort(404, description="Policy not found")
 
-    claims = Policy.get_claims_by_policy_id(policy_id)
+    claims = ClaimsService.get_claims_by_policy_id(policy_id)
     total_claims = Statistics.get_sum_of_claims_for_policy(policy_id)
     total_premium = round(Statistics.get_premium_for_policy(policy_id),2)
     loss_ratio = (total_claims / total_premium) * 100 if total_premium > 0 else 0
@@ -81,11 +81,11 @@ def add_policy():
 
     if request.method == "POST":
         form = request.form
-        last_policy_id = Policy.get_last_policy_id() or 0
+        last_policy_id = ClaimsService.get_last_policy_id() or 0
         policy_number = last_policy_id + 100000
         status = "Requested" if user_role == "insured" else "Approved"
 
-        Policy.add_policy(
+        PolicyManagementService.add_policy(
             client_id, policy_number, form["policy_type"], form["start_date"], form["end_date"], form["premium_amount"], status
         )
         
@@ -96,7 +96,7 @@ def add_policy():
 @policy_bp.route("/edit_policy/<int:policy_id>", methods=("GET", "POST"))
 @admin_required
 def edit_policy(policy_id):
-    policy = Policy.get_policy_by_id(policy_id)
+    policy = PolicyService.get_policy_by_id(policy_id)
 
     if policy is None:
         abort(404, description="Policy not found")
@@ -111,7 +111,7 @@ def edit_policy(policy_id):
         renewed = request.form.get("renewed", 0)
         status = request.form["status"]
 
-        Policy.update_policy(
+        PolicyManagementService.update_policy(
             policy_id, policy_number, policy_type, start_date, end_date, premium_amount,renewed,status
         )
         flash("Policy updated successfully", "success")
@@ -127,12 +127,12 @@ def edit_policy(policy_id):
 def delete_policy(policy_id, client_id):
     try:
         # Fetch all claim IDs associated with the policy
-        claim_ids = Claim.get_claims_by_policy(policy_id)
+        claim_ids = ClaimRetrieval.get_claims_by_policy(policy_id)
         for claim_id in claim_ids:
-            Claim.delete_claim(claim_id)
+            ClaimModification.delete_claim(claim_id)
         
         # Delete the policy
-        Policy.delete_policy(policy_id)
+        PolicyManagementService.delete_policy(policy_id)
         
         flash("Policy and associated claims deleted successfully", "warning")
     except Exception as e:
@@ -144,7 +144,7 @@ def delete_policy(policy_id, client_id):
 @admin_required
 def renew_policy(policy_id):
     try:
-        Policy.renew_policy(policy_id)
+        PolicyManagementService.renew_policy(policy_id)
         flash("Policy renewed successfully", "success")
     except ValueError as e:
         flash(str(e), "danger")

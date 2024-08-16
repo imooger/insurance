@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_app.models import get_db_connection
 from flask_app.controllers.auth_controller import login_required, admin_required
-from flask_app.models.claim import Claim
+from flask_app.models.claim import ClaimModification, ClaimRetrieval
 from flask_app.models.statistics import Statistics
 from datetime import datetime, timedelta
 
@@ -19,7 +19,7 @@ def claims():
     current_year = datetime.now().year
 
     if user_role == "administrator":
-        claims = Claim.get_all_claims_for_admin(order_by=order_by, order_dir=order_dir)
+        claims = ClaimRetrieval.get_all_claims_for_admin(order_by=order_by, order_dir=order_dir)
         #print(len(claims))  # claims data passed to the template)
         #print(Statistics.get_claim_count_by_status("New"))
         stats = {
@@ -36,7 +36,7 @@ def claims():
         }
         return render_template("claims/claims.html", claims=claims, stats=stats, order_by=order_by, order_dir=order_dir)
     elif user_role == "insured":
-        claims = Claim.get_claims_for_insured(user_email, order_by=order_by, order_dir=order_dir)
+        claims = ClaimRetrieval.get_claims_for_insured(user_email, order_by=order_by, order_dir=order_dir)
         #print(claims)  # claims data passed to the template
         return render_template("claims/claims.html", claims=claims, order_by=order_by, order_dir=order_dir)
 
@@ -49,7 +49,7 @@ def claim_details():
     if claim_id is None:
         return apology("Claim ID is required", 400)
 
-    claim = Claim.get_claim_by_id(claim_id)
+    claim = ClaimRetrieval.get_claim_by_id(claim_id)
     if not claim:
         return apology("Claim not found", 404)
 
@@ -69,7 +69,7 @@ def add_claim():
         claim_date = request.form["claim_date"]
         status = 'New' #request.form["status"]
 
-        Claim.add_claim(policy_id, description, claim_amount, claim_date, status)
+        ClaimModification.add_claim(policy_id, description, claim_amount, claim_date, status)
 
         return redirect(url_for("policy_bp.policy_details", policy_id=policy_id))
 
@@ -79,7 +79,7 @@ def add_claim():
 @claim_bp.route("/edit_claim/<int:claim_id>", methods=["GET", "POST"])
 @login_required
 def edit_claim(claim_id):
-    claim = Claim.get_claim_by_id(claim_id)
+    claim = ClaimRetrieval.get_claim_by_id(claim_id)
     user_role = session["role"]
     if not claim:
         return apology("Claim not found", 404)
@@ -96,7 +96,7 @@ def edit_claim(claim_id):
             status = claim["status"]  # Maintain current status if not admin
 
 
-        Claim.update_claim(claim_id, description, claim_amount, claim_date, status)
+        ClaimModification.update_claim(claim_id, description, claim_amount, claim_date, status)
 
         flash("Claim updated successfully", "success")
         next_url = request.form.get("next")
@@ -109,7 +109,7 @@ def edit_claim(claim_id):
 @claim_bp.route("/delete_claim/<int:claim_id>/<int:policy_id>", methods=["POST"])
 @login_required
 def delete_claim(claim_id, policy_id):
-    Claim.delete_claim(claim_id)
+    ClaimModification.delete_claim(claim_id)
     # Redirect to the previous page (referrer) if available, else to policy_details
     return redirect(
         request.referrer or url_for("policy_bp.policy_details", policy_id=policy_id)

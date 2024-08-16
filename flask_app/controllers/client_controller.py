@@ -5,12 +5,12 @@ from flask_app.controllers.auth_controller import (
     admin_required,
     apology,
 )
-from flask_app.models.client import Client
-from flask_app.models.claim import Claim
+from flask_app.models.client import ClientManager, PolicyManager, ClaimsManager
+from flask_app.models.claim import ClaimModification, ClaimRetrieval
 from flask_app.models.statistics import Statistics
-from flask_app.models.policy import Policy
+from flask_app.models.policy import PolicyService
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_app.models.auth import User
+from flask_app.models.auth import RegistrationService, UserService, AuthService
 from datetime import date, datetime
 import calendar
 
@@ -42,22 +42,22 @@ def clients():
     order_by = request.args.get("order_by", "first_name")
     order_dir = request.args.get("order_dir", "asc")
 
-    clients = Client.get_all_clients(order_by=order_by, order_dir=order_dir)
+    clients = ClientManager.get_all_clients(order_by=order_by, order_dir=order_dir)
     
     clients_with_details = []
     for client in clients:
         client_dict = dict(client)
         
         # Fetch policies and categorize them
-        client_policies = Policy.get_policies_by_client_id(client['client_id'])
+        client_policies = PolicyService.get_policies_by_client_id(client['client_id'])
         active_policies = [policy for policy in client_policies if policy['activity'] == 'Active']
         expired_policies = [policy for policy in client_policies if policy['activity'] == 'Expired']
 
-        indv_total_premium = round(Client.get_sum_of_earned_premiums_by_client_id(client["client_id"]),2)
+        indv_total_premium = round(PolicyManager.get_sum_of_earned_premiums_by_client_id(client["client_id"]),2)
         
         # Fetch claims for the client
-        claims = Claim.get_claims_for_client(client['client_id'])
-        premium_per_month = round(Client.get_premium_per_month_on_active_policies(client["client_id"]),2)
+        claims = ClaimRetrieval.get_claims_for_client(client['client_id'])
+        premium_per_month = round(PolicyManager.get_premium_per_month_on_active_policies(client["client_id"]),2)
         
         # Calculate sum of paid claims
         paid_claim_sum = sum([claim['claim_amount'] for claim in claims if claim['status'] == 'Paid'])
@@ -117,9 +117,9 @@ def client_details():
         client_id = request.args.get("client_id", type=int)
         if client_id is None:
             return apology("Client ID is required for administrators", 400)
-        client = Client.get_client_by_id(client_id)
+        client = ClientManager.get_client_by_id(client_id)
     elif user_role == "insured":
-        client = Client.get_client_by_email(user_email)
+        client = ClientManager.get_client_by_email(user_email)
     else:
         return apology("Unauthorized access", 403)
 
@@ -127,12 +127,12 @@ def client_details():
         return apology("Client not found", 404)
 
 
-    policies = Client.get_policies_with_claim_counts(client["client_id"])
-    indv_total_claims = Client.get_total_claims_by_client_id(client["client_id"])
-    indv_total_premium = round(Client.get_sum_of_earned_premiums_by_client_id(client["client_id"]),2)
-    num_active_policies = Client.get_number_of_active_policies(client["client_id"])
-    num_expired_policies = Client.get_number_of_expired_policies(client["client_id"])
-    premium_per_month = round(Client.get_premium_per_month_on_active_policies(client["client_id"]),2)
+    policies = PolicyManager.get_policies_with_claim_counts(client["client_id"])
+    indv_total_claims = ClaimsManager.get_total_claims_by_client_id(client["client_id"])
+    indv_total_premium = round(PolicyManager.get_sum_of_earned_premiums_by_client_id(client["client_id"]),2)
+    num_active_policies = PolicyManager.get_number_of_active_policies(client["client_id"])
+    num_expired_policies = PolicyManager.get_number_of_expired_policies(client["client_id"])
+    premium_per_month = round(PolicyManager.get_premium_per_month_on_active_policies(client["client_id"]),2)
     loss_ratio = (indv_total_claims / indv_total_premium) * 100 if indv_total_premium > 0 else 0
 
     # Calculate months active for each policy
@@ -154,7 +154,7 @@ def client_details():
 
             months_active = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
             policy_dict['months_active'] = 1 if months_active == 0 else months_active
-            policy_dict['total_premium'] = Client.get_premium_for_policy(policy['policy_id'])
+            policy_dict['total_premium'] = PolicyManager.get_premium_for_policy(policy['policy_id'])
             policies_with_details.append(policy_dict)
         except ValueError as e:
             print(f"Error processing policy {policy['policy_id']}: {e}")
@@ -170,7 +170,7 @@ def client_details():
         num_expired_policies=num_expired_policies,
         premium_per_month=premium_per_month,
         loss_ratio=loss_ratio,
-        is_policy_ending_within_a_week=Client.is_policy_ending_within_a_week
+        is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week
     )
 
 
@@ -184,7 +184,7 @@ def add_client():
         form_data = request.form.to_dict()
         form_data['photo'] = "https://i.pinimg.com/236x/c9/f7/d6/c9f7d650ce2a7f0f63ee7b1691694229.jpg"
 
-        error, user_id = User.register(
+        error, user_id = RegistrationService.register(
             form_data["email"],
             form_data["password"],
             form_data["first_name"],
@@ -211,10 +211,10 @@ def add_client():
 @client_bp.route("/edit_client/<int:client_id>", methods=("GET", "POST"))
 @login_required
 def edit_client(client_id):
-    client = Client.get_client_by_id(client_id)
+    client = ClientManager.get_client_by_id(client_id)
     
     # Fetch user info based on the client's email
-    user = User.get_user_by_email(client['email'])
+    user = UserService.get_user_by_email(client['email'])
     
     if request.method == "POST":
         form_data = request.form.to_dict()
@@ -238,7 +238,7 @@ def edit_client(client_id):
         form_data['photo_link'] = photo_link
 
         # Update the client in the Clients table
-        Client.update_client(
+        ClientManager.update_client(
             client_id, 
             form_data["first_name"], 
             form_data["last_name"], 
@@ -254,7 +254,7 @@ def edit_client(client_id):
 
         # Check if the email has changed and update it in the Users table
         if user and user['email'] != form_data["email"]:
-            User.update_email(user['id'], form_data["email"])
+            UserService.update_email(user['id'], form_data["email"])
             # Update the session email to match the new email
             session["email"] = form_data["email"]
 
@@ -269,13 +269,13 @@ def edit_client(client_id):
 @admin_required
 def delete_client(client_id):
     # Fetch the client's email before deleting the client
-    client = Client.get_client_by_id(client_id)
+    client = ClientManager.get_client_by_id(client_id)
     if client:
         # Delete the user from the Users table
-        User.delete_user_by_email(client['email'])
+        UserService.delete_user_by_email(client['email'])
         
         # Delete the client from the Clients table
-        Client.delete_client(client_id)
+        ClientManager.delete_client(client_id)
 
     # Redirect to a known route, such as the clients list
     return redirect(url_for("client_bp.clients"))
