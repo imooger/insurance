@@ -1,4 +1,9 @@
+######################################
+DB
+######################################
 
+I do recomend using the included insurance.db,
+it has clients with all details and it is much easier to demo the app.
 
 ######################################
 HOW TO START THE APP
