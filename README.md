@@ -50,7 +50,7 @@ sqlite3 insurance.db  
 ```bash
 python run.py  	     
 ```
-These command will create your environment, db (if needed) and start the server, and you can access the application in your web browser.
+These commands will create your environment, db (if needed) and start the server, and you can access the application in your web browser.
 
 # Quick start
 
