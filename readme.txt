@@ -14,11 +14,11 @@ Python >= 3.11
 
 Steps:
 
-1. python -m venv .venv				      # Create the virtual environment
-2. source .venv/bin/activate  			# Activate the environment
-3. pip install -r requirements.txt  # Install dependencies
-4. sqlite3 insurance.db  			      # OPTIONAL! Create the database (if not using the demo)
-5. python run.py  				          # Start the server
+1. python -m venv .venv            # Create the virtual environment
+2. source .venv/bin/activate       # Activate the environment
+3. pip install -r requirements.txt # Install dependencies
+4. sqlite3 insurance.db            # OPTIONAL! Create the database (if not using the demo)
+5. python run.py                   # Start the server
 
 
 #######################################
