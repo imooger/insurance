@@ -44,7 +44,7 @@ pip install -r requirements.txt  
 ```
 ### 4. Create the database OPTIONAL (demo db is included!) 
 ```bash
-sqlite3 insurance.db    
+flask_app/sqlite3 insurance.db    
 ```
 ### 5. Start the server
 ```bash
