@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Clients
+{% endblock %}
+
+{% block main %}
+
+
+<div class="container-fluid d-flex flex-column justify-content-start mt-5">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-4">Clients</h1>   
+        {% if session["role"] == 'administrator' %}
+        <a href="{{ url_for('client_bp.add_client') }}" class="btn btn-custom-main btn-custom-add-client mb-3">
+            <i class="fas fa-user-plus"></i> Add New Client
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Cards Section -->
+    <div class="cards-container">
+        <div class="card card1">
+            <h2>Loss Ratio</h2>
+            <hr>
+            <div class="canvas-wrapper">
+                <canvas id="lossRatioBarChart" 
+                    data-total-premium="{{ stats.total_premium }}" 
+                    data-total-claim-amount="{{ stats.total_claim_amount }}">
+                </canvas>
+            </div>
+        </div>
+        <div class="card card2">
+            <h2>Claims by Status</h2>
+            <hr>
+            <div class="canvas-wrapper">
+                <canvas id="claimsCountChartBAR"
+                    data_bar_new_claim_count="{{ stats.new_claim_count }}"
+                    data_bar_pending_claim_count="{{ stats.pending_claim_count }}"
+                    data_bar_paid_claim_count="{{ stats.paid_claim_count }}"
+                    data_bar_denied_claim_count="{{ stats.denied_claim_count }}">
+                </canvas>           
+            </div>
+        </div>
+        <div class="card card3">
+            <h2>Policy Status By Type</h2>
+            <hr>
+            <div class="canvas-wrapper">
+                <canvas id="activeVsExpiredPoliciesBar" 
+                    data-house-active-premiums="{{ stats.house_active_premiums }}" 
+                    data-auto-active-premiums="{{ stats.auto_active_premiums }}" 
+                    data-life-active-premiums="{{ stats.life_active_premiums }}" 
+                    data-health-active-premiums="{{ stats.health_active_premiums }}" 
+                    data-house-expired-premiums="{{ stats.house_expired_premiums }}" 
+                    data-auto-expired-premiums="{{ stats.auto_expired_premiums }}" 
+                    data-life-expired-premiums="{{ stats.life_expired_premiums }}" 
+                    data-health-expired-premiums="{{ stats.health_expired_premiums }}">
+                </canvas>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+     <!-- Clients Table -->
+     <div class="custom-table-container">
+        <table class="table custom-table">
+            <thead class="thead-dark">
+                <tr class="nowrap-columns">
+                    <th>
+                        <a href="{{ url_for('client_bp.clients', order_by='client_id', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                            Client ID
+                            {% if order_by == 'client_id' %}
+                            {% if order_dir == 'asc' %}
+                            ⋀
+                            {% else %}
+                            ⋁
+                            {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('client_bp.clients', order_by='last_name', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                            Client Name
+                            {% if order_by == 'last_name' %}
+                            {% if order_dir == 'asc' %}
+                            ⋀
+                            {% else %}
+                            ⋁
+                            {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th> 
+                    <th>
+                        <a href="{{ url_for('client_bp.clients', order_by='state', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                            State
+                            {% if order_by == 'state' %}
+                            {% if order_dir == 'asc' %}
+                            ⋀
+                            {% else %}
+                            ⋁
+                            {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <!-- <th class="text-center">
+                        <a href="{{ url_for('client_bp.clients', order_by='state', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                            State
+                            {% if order_by == 'state' %}
+                            {% if order_dir == 'asc' %}
+                            ⋀
+                            {% else %}
+                            ⋁
+                            {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>  -->
+                    <th class="text-center">
+                        <a href="{{ url_for('client_bp.clients', order_by='active_policies_count', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                            Active Policies
+                            {% if order_by == 'active_policies_count' %}
+                            {% if order_dir == 'asc' %}
+                            ⋀
+                            {% else %}
+                            ⋁
+                            {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <!-- <th class="text-center">Expired Policies</th> -->
+                    <th class="text-center">
+                        <a href="{{ url_for('client_bp.clients', order_by='claim_count', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                            Claims
+                            {% if order_by == 'claim_count' %}
+                            {% if order_dir == 'asc' %}
+                            ⋀
+                            {% else %}
+                            ⋁
+                            {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                        <th class="text-center">
+                            <a href="{{ url_for('client_bp.clients', order_by='paid_claim_sum', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                                Paid Claims
+                                {% if order_by == 'paid_claim_sum' %}
+                                    {% if order_dir == 'asc' %}
+                                        ⋀
+                                    {% else %}
+                                        ⋁
+                                    {% endif %}
+                                {% else %}
+                                    ⋀⋁
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="text-center">
+                            <a href="{{ url_for('client_bp.clients', order_by='monthly_premium', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                                Premiums
+                                {% if order_by == 'monthly_premium' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                    {% else %}
+                                    ⋁
+                                    {% endif %}
+                                {% else %}
+                                ⋀⋁
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="text-center">
+                            <a href="{{ url_for('client_bp.clients', order_by='indv_total_premium', order_dir=('asc' if order_dir == 'desc' else 'desc')) }}">
+                                Total Premiums
+                            {% if order_by == 'indv_total_premium' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr data-href="{{ url_for('client_bp.client_details', client_id=client.client_id) }}">
+                    <td>{{ client.client_id }}</td>
+                    <td><a class="bold-black-hover" href="{{ url_for('client_bp.client_details', client_id=client.client_id) }}">{{ client.first_name[0] }}. {{ client.last_name }}</a></td>
+                    <td>{{ client.state }}</td>
+                    <!-- <td>{{ client.state }}</td> -->
+                    <td class="text-center">{{ client.active_policies|length if client.active_policies else '0' }}</td>
+                    <!-- <td class="text-center {% if client.expired_policies|length > 0 %}font_danger{% endif %}">{{ client.expired_policies|length if client.expired_policies else '0' }}</td> -->
+                    <td class="text-center {% if client.claims|length > 0 %}font_danger{% endif %}">{{ client.claims|length if client.claims else '0' }}</td>
+                    <td class="text-center">${{ client.paid_claim_sum }}</td>
+                    <td class="text-center">${{ client.premium_per_month }}</td>
+                    <td class="text-center">${{ client.indv_total_premium }}</td>
+                   
+                    <td class="text-center nowrap-columns actions-column">
+                        <!-- <a href="{{ url_for('client_bp.client_details', client_id=client.client_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-norm" onclick="event.stopPropagation();">Detail</a> -->
+                        <a href="{{ url_for('policy_bp.add_policy', client_id=client.client_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-add">Add Policy</a>
+                        <form action="{{ url_for('client_bp.delete_client', client_id=client.client_id) }}" method="post" onsubmit="return confirmDeleteClient('{{ client.client_id }}')" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block card %}
+<div class="referral-card">
+    <div class="referral-card-content">
+        <div class="referral-card-icon">
+            <i class="fas fa-users fa-3x"></i>
+            
+        </div>
+        <div class="referral-card-text">
+            <h5>Client Management</h5>
+            <p> Easy management of clients.</p>
+        </div>
+        <div>
+            <a href="#" class="btn btn-primary">Explore Policies</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

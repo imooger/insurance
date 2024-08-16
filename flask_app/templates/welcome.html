@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Welcome
+{% endblock %}
+
+{% block main %}
+
+<style>
+    body {
+        background-image: url('/static/images/background2.jpg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        height: 100vh;
+        display: flex;
+    }
+
+    h1 {
+        color : #606060  !important;
+    }
+
+</style>
+
+<div class="container welcome-frame">
+    <h1 class="welcome-h1">Welcome to insur⟑nce</h1>
+    <!-- <h2> Web App</h2> -->
+    <h5>a final web app project for IT-networks</h5>
+    <hr>
+    
+    <p><strong>MAIN FEATURES:</strong></p>
+    <ul>       
+        <li>Responsive <strong>desktop design</strong></li>
+        <li>Intuitive management and overview of insured clients, policies, and claims.</li>
+        <li>Dynamic table <strong>sorting</strong> options for easy data exploration and organization.</li>
+        <li>Efficient creation, editing, and detailed viewing of user profiles and insurance policies.</li>
+        <li>User <strong>role management</strong> to control data access and permissions effectively.</li>
+        <li>Secure login and registration with password <strong>hashing</strong> techniques.</li>
+        <li><strong>Executive Summary Dashboard</strong> for high-level overviews and insights.</li>
+        <li>Tracking and management of insurance events and statistics.</li>
+        <li>Extensive use of charts and <strong>statistics</strong> for data visualization and <strong>analysis.</strong></li>
+        <li>And much more...</li>       
+    </ul>
+    
+    <p><strong>TECHNICAL IMPLEMENTATIONS:</strong></p>
+    <ul>
+        <li><strong>CRUD</strong> capabilities for managing insured individuals, policies, and claims.</li>
+        <li>Implementing the <strong>MVC</strong> (Model-View-Controller) pattern for enhanced scalability and efficient code organization.</li>
+        <li>Some of the libraries used: <strong>Flask, Jinja2, Werkzeug, SQLite3 ...</strong></li>
+        <li>Using an <strong>SQL database</strong> ensuring seamless management and overview of insured clients, policies, and claims.</li>
+        
+    </ul>
+    <p><strong>HOW TO SIGN IN:</strong></p>
+    <ul>
+        <li>To sign in as admin use <strong>email: admin, pasword: admin</strong></li>
+        <li>To sign in as any of the fictional characters use</li>
+        <li><strong>email: first_name@last_name.com, password: name</strong></li>
+        <li>THANK YOU FOR YOUR TIME</li>
+        
+    </ul>
+    <a href="/login" class="btn btn-form btn-submit option-link">Sign in</a>
+    <a href="/register" class="btn btn-form btn-submit option-link">Register Client</a>
+    <!-- <a href="/contact_us" class="btn btn-form btn-submit option-link">Contact Me</a> -->
+</div>
+
+{% endblock %}

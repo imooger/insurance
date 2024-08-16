@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Edit Policy
+{% endblock %}
+
+{% block main %}
+    <div class="container form-frame">
+        <h1 class="text-center">Edit Policy</h1>
+        <form method="post" class="row g-4">
+            <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="policy_number" class="form-label">POLICY NUMBER</label>
+                    <input type="text" id="policy_number" name="policy_number" class="form-control" value="{{ policy.policy_number }}">
+                </div>
+                <div class="form-group">
+                    <label for="policy_type" class="form-label">POLICY TYPE</label>
+                    <select id="policy_type" name="policy_type" class="form-select">
+                        <option value="House" {% if policy.policy_type=='House' %}selected{% endif %}>House</option>
+                        <option value="Auto" {% if policy.policy_type=='Auto' %}selected{% endif %}>Auto</option>
+                        <option value="Life" {% if policy.policy_type=='Life' %}selected{% endif %}>Life</option>
+                        <option value="Health" {% if policy.policy_type=='Health' %}selected{% endif %}>Health</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="premium_amount" class="form-label">PREMIUM PER MONTH USD</label>
+                    <input type="number" step="0.01" id="premium_amount" name="premium_amount" class="form-control" value="{{ policy.premium_amount }}">
+                </div>
+                <div class="form-group">
+                    <label for="renewed" class="form-label">RENEWED</label>
+                    <input type="number" id="renewed" name="renewed" class="form-control" value="{{ policy.renewed }}">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="start_date" class="form-label">START DATE</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control" value="{{ policy.start_date }}">
+                </div>
+                <div class="form-group">
+                    <label for="end_date" class="form-label">END DATE</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" value="{{ policy.end_date }}">
+                </div>
+                <div class="form-group">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="Requested" {% if policy.status=='Requested' %}selected{% endif %}>Requested</option>
+                        <option value="Approved" {% if policy.status=='Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Denied" {% if policy.status=='Denied' %}selected{% endif %}>Denied</option>
+                        <!-- <option value="Health" {% if policy.policy_type=='Health' %}selected{% endif %}>Health</option> -->
+                    </select>
+                </div>
+            </div>
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-form btn-submit">Save Changes</button>
+                <!-- <button type="button" class="btn btn-secondary" onclick="goBack()">Go Back</button> -->
+            </div>
+        </form>
+    </div>
+
+{% endblock %}

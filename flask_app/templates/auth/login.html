@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Log In
+{% endblock %}
+
+{% block main %}
+<style>
+    body {
+        background-image: url('/static/images/background2.jpg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        height: 100vh;
+        display: flex;
+    }
+
+    .form-frame {
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .custom-position {
+            margin-top: 20vh; 
+    }
+
+</style>
+
+<div class="container-fluid vh-100 d-flex flex-column align-items-center justify-content-start custom-position">
+    <!-- <h2 class="text-center mb-4">Sign in</h2> -->
+    <form action="/login" method="post" class="col-md-6 col-lg-5 col-xl-4 form-frame">
+        <!-- <h2 class="text-center mb-4">Sign in</h2> -->       
+        <div class="mb-3 form-group">
+            <input autocomplete="off" autofocus class="form-control form-control-login" id="email" name="email" placeholder="Email" type="text">
+        </div>
+        <div class="mb-3 form-group">
+            <input class="form-control form-control-login" id="password" name="password" placeholder="Password" type="password">
+        </div>
+
+        <div class="text-center">
+            <button class="btn btn-form btn-submit" type="submit">Sign In</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

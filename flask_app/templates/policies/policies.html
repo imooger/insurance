@@ -1,0 +1,257 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Policies
+{% endblock %}
+
+{% block main %}
+
+<div class="container-fluid d-flex flex-column justify-content-start mt-5">
+    <h1 class="mb-4">Policies</h1>
+    
+    <!-- Cards Section -->
+    {% if session.role == 'administrator' %}
+        <div class="cards-container">
+            <div class="card card1">
+                <h2>Policy Status</h2>
+                <hr>
+                <div class="canvas-wrapper">
+                    <canvas id="policyStatusChart"
+                        data_active_policy_count="{{ stats.active_policy_count }}"
+                        data_expired_policy_count="{{ stats.expired_policy_count }}">
+                    </canvas>
+                </div>
+            </div>
+            <div class="card card2">
+                <h2>Active Policies by Type</h2>
+                <hr>
+                <div class="canvas-wrapper">
+                    <canvas id="policyCountsByTypeBAR"
+                        data_house_policy_count="{{ stats.house_policy_count }}"
+                        data_auto_policy_count="{{ stats.auto_policy_count }}"
+                        data_life_policy_count="{{ stats.life_policy_count }}"
+                        data_health_policy_count="{{ stats.health_policy_count }}">
+                    </canvas>
+                </div>
+            </div>
+            <div class="card card3">
+                <h2>New Policies in {{ stats.current_year }}</h2>
+                <hr>
+                <div class="canvas-wrapper">
+                    <canvas id="newPoliciesByMonthChart"
+                        data-new-policies-count-by-month="{{ stats.new_policies_count_by_month|tojson }}">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <hr class="my-4">
+
+    <div class="custom-table-container">
+        <table class="table custom-table">
+            <thead>
+                <tr class="nowrap-columns">
+                    <th>
+                        <a href="{{ url_for('policy_bp.policies', order_by='policy_number', order_dir='asc' if order_by == 'policy_number' and order_dir == 'desc' else 'desc') }}">
+                            Policy no.
+                            {% if order_by == 'policy_number' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('policy_bp.policies', order_by='last_name', order_dir='asc' if order_by == 'last_name' and order_dir == 'desc' else 'desc') }}">
+                            Client Name
+                            {% if order_by == 'last_name' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('policy_bp.policies', order_by='policy_type', order_dir='asc' if order_by == 'policy_type' and order_dir == 'desc' else 'desc') }}">
+                            Policy Type 
+                            {% if order_by == 'policy_type' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('policy_bp.policies', order_by='start_date', order_dir='asc' if order_by == 'start_date' and order_dir == 'desc' else 'desc') }}">
+                            Start Date
+                            {% if order_by == 'start_date' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('policy_bp.policies', order_by='end_date', order_dir='asc' if order_by == 'end_date' and order_dir == 'desc' else 'desc') }}">
+                            End Date
+                            {% if order_by == 'end_date' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a href="{{ url_for('policy_bp.policies', order_by='premium_amount', order_dir='asc' if order_by == 'premium_amount' and order_dir == 'desc' else 'desc') }}">
+                            Premium
+                            {% if order_by == 'premium_amount' %}
+                                    {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a href="{{ url_for('policy_bp.policies', order_by='total_premium', order_dir='asc' if order_by == 'total_premium' and order_dir == 'desc' else 'desc') }}">
+                            Sum Premium
+                            {% if order_by == 'total_premium' %}
+                                {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a href="{{ url_for('policy_bp.policies', order_by='claim_count', order_dir='asc' if order_by == 'claim_count' and order_dir == 'desc' else 'desc') }}">
+                            Claim Count
+                            {% if order_by == 'claim_count' %}
+                                {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    
+                    <th class="text-center">
+                        <a href="{{ url_for('policy_bp.policies', order_by='status', order_dir='asc' if order_by == 'status' and order_dir == 'desc' else 'desc') }}">
+                            Status
+                            {% if order_by == 'status' %}
+                                {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a href="{{ url_for('policy_bp.policies', order_by='activity', order_dir='asc' if order_by == 'activity' and order_dir == 'desc' else 'desc') }}">
+                            Activity
+                            {% if order_by == 'activity' %}
+                                {% if order_dir == 'asc' %}
+                                    ⋀
+                                {% else %}
+                                    ⋁
+                                {% endif %}
+                            {% else %}
+                                ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <!-- <th>Renewed</th> -->
+                    <th class="actions-column">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for policy in policies %}
+                <tr data-href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}">
+                    <td>
+                        <a class="bold-black-hover" href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}" onclick="event.stopPropagation();">{{ policy.policy_number }}</a>
+                    </td>
+                    <td><a class="bold-black-hover" href="{{ url_for('client_bp.client_details', client_id=policy.client_id) }}" onclick="event.stopPropagation();">{{ policy.first_name[0] }}. {{ policy.last_name }}</a></td>
+                    <td>{{ policy.policy_type }}</td>
+                    <td>{{ policy.start_date }}</td>
+                    <td>{{ policy.end_date }}</td>
+                    <td  class="text-center">${{ policy.premium_amount }}</td>
+                    <td class="text-center" >${{ policy.total_premium }}</td>
+                    <td class="text-center">{{ policy.claim_count }}</td>
+                    <td class="text-center {% if policy.status == 'Requested' %}ending-soon-font{% endif %}">{{ policy.status }}</td>
+                    <td class="{% if is_policy_ending_within_a_week(policy.end_date) %}ending-soon-font{% endif %}">{% if is_policy_ending_within_a_week(policy.end_date) %}ENDING SOON{% else %}{{ policy.activity }}{% endif %}</td>
+                    <!-- <td class="renewed-column">{{ policy.Renewed }}</td> -->
+                    <td class="actions-column nowrap-columns">
+                        {% if session.role == 'administrator' %}
+                        <a href="{{ url_for('policy_bp.edit_policy', policy_id=policy.policy_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-norm" onclick="event.stopPropagation();">Edit</a>
+                        <a href="{{ url_for('claim_bp.add_claim', policy_id=policy.policy_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Add Claim</a>
+                        <form action="{{ url_for('policy_bp.delete_policy', policy_id=policy.policy_id, client_id=policy.client_id) }}" method="post" style="display:inline;" onsubmit="return confirmPolicyDelete('{{ policy.policy_id }}')" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                        </form>
+                        <!-- {% if policy.Activity == 'Expired' %}
+                            <form action="{{ url_for('policy_bp.renew_policy', policy_id=policy.policy_id) }}" method="post" style="display:inline;" onsubmit="return confirmPolicyRenew('{{ policy.policy_id }}')" onclick="event.stopPropagation();">
+                                <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-renew">Renew</button>
+                            </form>
+                        {% endif %} -->
+                        {% endif %}
+                        {% if session.role == 'insured' and policy.activity == 'Active' and policy.status != 'Requested' %}
+                        <a href="{{ url_for('claim_bp.add_claim', policy_id=policy.policy_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Add Claim</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %} 
+
+{% block card %}
+<div class="referral-card">
+    <div class="referral-card-content">
+        <div class="referral-card-icon">
+            <i class="fas fa-landmark fa-3x"></i>
+        </div>
+        <div class="referral-card-text">
+            <h5>Policy Management</h5>
+            <p>Manage and track insurance policies.</p>
+        </div>
+        <div>
+            <a href="#" class="btn btn-primary">Explore Policies</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Add Claim
+{% endblock %}
+
+{% block main %}
+    <div class="container form-frame">
+        <h1 class="text-center">Add Claim</h1>
+        <form method="post" class="row g-4" id="contact-form" role="form">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="claim_date" class="form-label">DATE OF CLAIM *:</label>
+                    <input type="date" id="claim_date" name="claim_date" class="form-control" value="{{ today }}" required>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="claim_amount" class="form-label">CLAIM AMOUNT USD*:</label>
+                    <input type="number" id="claim_amount" name="claim_amount" step="0.01" class="form-control" placeholder="Enter Amount in USD" required>
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <div class="form-group" style="height: 200px;">
+                    <label for="description" class="form-label">DESCRIPTION *:</label>
+                    <textarea id="description" name="description" class="form-control" placeholder="Enter Description" required></textarea>
+                </div>
+            </div>
+
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-form btn-submit">Add Claim →</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

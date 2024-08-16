@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Claim Detail
+{% endblock %}
+
+{% block main %}
+    <div class="container form-frame">
+        <h1 class="text-center">Claim Detail</h1>
+        <form method="post" class="row" id="contact-form" role="form">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="claim_date" class="form-label">DATE OF CLAIM * :</label>
+                    <input type="date" id="claim_date" name="claim_date" class="form-control" value="{{ claim.claim_date }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="claim_amount" class="form-label">CLAIM AMOUNT USD*:</label>
+                    <input type="number" id="claim_amount" name="claim_amount" step="0.01" class="form-control" value="{{ claim.claim_amount }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="status" class="form-label">STATUS:</label>
+                    <input type="text" class="form-control" value="{{ claim.status }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="form-group" style="height: 200px;">
+                    <label for="description" class="form-label">DESCRIPTION *:</label>
+                    <textarea id="description" name="description" class="form-control" readonly>{{ claim.Description }}</textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                {% if session["role"] == 'administrator' %}
+                    <a href="{{ url_for('claim_bp.edit_claim', claim_id=claim.claim_id, next=request.url) }}" class="btn btn-form btn-submit">Edit Claim</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+{% endblock %}

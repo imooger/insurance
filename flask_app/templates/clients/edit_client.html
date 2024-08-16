@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Add Client
+{% endblock %}
+
+{% block main %}
+
+<div class="container form-frame">
+    <h1 class="text-center">Edit Client</h1>
+    <form method="post" class="row g-4" id="contact-form" role="form">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="first_name" class="form-label">FIRST NAME *</label>
+                <input type="text" id="first_name" name="first_name" class="form-control" value="{{ client.first_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name" class="form-label">LAST NAME *</label>
+                <input type="text" id="last_name" name="last_name" class="form-control" value="{{ client.last_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="date_of_birth" class="form-label">DATE OF BIRTH *</label>
+                <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" value="{{ client.date_of_birth }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email" class="form-label">EMAIL *</label>
+                {% if session["role"] == 'administrator' %}
+                <input type="text" id="email" name="email" class="form-control" value="{{ client.email }}" required>
+                {% elif session["role"] == 'insured' %}
+                <input type="email" id="email" name="email" class="form-control" value="{{ client.email }}" required>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="phone" class="form-label">PHONE *</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="{{ client.phone }}" required>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="street" class="form-label">STREET *</label>
+                <input type="text" id="street" name="street" class="form-control" value="{{ client.street }}" required>
+            </div>
+            <div class="form-group">
+                <label for="city" class="form-label">CITY *</label>
+                <input type="text" id="city" name="city" class="form-control" value="{{ client.city }}" required>
+            </div>
+            <div class="form-group">
+                <label for="state" class="form-label">STATE *</label>
+                <input type="text" id="state" name="state" class="form-control" value="{{ client.state }}" required>
+            </div>
+            <div class="form-group">
+                <label for="zip" class="form-label">ZIP CODE *</label>
+                <input type="text" id="zip" name="zip" class="form-control" value="{{ client.zip }}" required>
+            </div>
+            <div class="form-group">
+                <label for="avatar" class="form-label">AVATAR</label>
+                <select class="form-select" id="avatar" name="avatar">
+                    <option value="">Select Avatar</option>
+                    <option value="female_1">Female_1</option>
+                    <option value="female_2">Female_2</option>
+                    <option value="female_3">Female_3</option>
+                    <option value="male_1">Male_1</option>
+                    <option value="male_2">Male_2</option>
+                    <option value="male_3">Male_3</option>
+                    <option value="bender_1">Bender_1</option>
+                    <option value="bender_2">Bender_2</option>
+                    <option value="bender_3">Bender_3</option>
+                    <option value="leela_1">Leela_1</option>
+                    <option value="fry_1">Fry_1</option>
+                    <option value="professor_1">Professor_1</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-form btn-submit">Submit →</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

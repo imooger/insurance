@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Edit Claim
+{% endblock %}
+
+{% block main %}
+
+
+<style></style>
+
+<div class="container form-frame">
+    <h1 class="text-center">Edit Claim</h1>
+    <form method="post" class="row" id="contact-form" role="form">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="claim_date" class="form-label">DATE OF CLAIM * :</label>
+                <input type="date" id="claim_date" name="claim_date" class="form-control" value="{{ claim.claim_date }}" required>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="claim_amount" class="form-label">CLAIM AMOUNT USD*:</label>
+                <input type="number" id="claim_amount" name="claim_amount" step="0.01" class="form-control" value="{{ claim.claim_amount }}" required>
+            </div>
+        </div>
+        
+        {% if session["role"] == 'administrator' %}
+        <div class="col-md-6">
+            <div class="form-group form-group-red">
+                <label for="status" class="form-label form-label-red">STATUS:</label>
+                <select id="status" name="status" class="form-select form-select-red">
+                    <option value="New" {% if claim.status == 'New' %}selected{% endif %}>New</option>
+                    <option value="Pending" {% if claim.status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Paid" {% if claim.status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Denied" {% if claim.status == 'Denied' %}selected{% endif %}>Denied</option>
+                </select>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="col-12">
+            <div class="form-group" style="height: 200px;">
+                <label for="description" class="form-label">DESCRIPTION *:</label>
+                <textarea id="description" name="description" class="form-control" required>{{ claim.description }}</textarea>
+            </div>
+        </div>
+
+        <div class="col-12 text-center mb-4">
+            <button type="submit" class="btn btn-form btn-submit">Submit →</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

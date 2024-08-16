@@ -1,0 +1,233 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Claims
+{% endblock %}
+
+{% block main %}
+
+
+<div class="container-fluid d-flex flex-column justify-content-start mt-5">
+    <h1 class="mb-4">Claims</h1>
+
+    <!-- Cards Section -->
+    {% if session.role == 'administrator' %}
+    <!-- Statistics Section -->
+    <div class="cards-container">
+        <div class="card card1">
+            <h2>Claims by Status</h2>
+            <hr>
+            <div class="canvas-wrapper">
+                <canvas id="claimsCountChartBAR"
+                    data_bar_new_claim_count="{{ stats.new_claim_count }}"
+                    data_bar_pending_claim_count="{{ stats.pending_claim_count }}"
+                    data_bar_paid_claim_count="{{ stats.paid_claim_count }}"
+                    data_bar_denied_claim_count="{{ stats.denied_claim_count }}">
+                </canvas>
+            </div>
+        </div>
+        <div class="card card2">
+            <h2>Claims by Policy Type</h2>
+            <hr>
+            <div class="canvas-wrapper">
+                <canvas id="claimsByPolicyTypeChartBAR"
+                    data_bar_house_claim_count="{{ stats.house_claim_count_by_policy_type }}"
+                    data_bar_auto_claim_count="{{ stats.auto_claim_count_by_policy_type }}"
+                    data_bar_life_claim_count="{{ stats.life_claim_count_by_policy_type }}"
+                    data_bar_health_claim_count="{{ stats.health_claim_count_by_policy_type }}">
+                </canvas>
+            </div>
+        </div>
+        <div class="card card3">
+            <h2>New Claims in {{ stats.current_year }}</h2>
+            <hr>
+            <div class="canvas-wrapper">
+                <canvas id="claimsByMonthChart"
+                    data-new-claim-count-by-month="{{ stats.claim_count_by_month|tojson }}">
+                </canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    <div class="custom-table-container">
+        <table class="table custom-table">
+            <thead>
+                <tr class="nowrap-columns">
+                    <th>
+                        <a href="{{ url_for('claim_bp.claims', order_by='claim_id', order_dir='asc' if order_by == 'claim_id' and order_dir == 'desc' else 'desc') }}">
+                            Claim no.
+                            {% if order_by == 'claim_id' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('claim_bp.claims', order_by='last_name', order_dir='asc' if order_by == 'last_name' and order_dir == 'desc' else 'desc') }}">
+                            Client Name
+                            {% if order_by == 'last_name' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('claim_bp.claims', order_by='policy_type', order_dir='asc' if order_by == 'policy_type' and order_dir == 'desc' else 'desc') }}">
+                            Policy Type
+                            {% if order_by == 'policy_type' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('claim_bp.claims', order_by='policy_number', order_dir='asc' if order_by == 'policy_number' and order_dir == 'desc' else 'desc') }}">
+                            Policy no.
+                            {% if order_by == 'policy_number' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <!-- <th>Description</th> -->
+                    <th>
+                        <a href="{{ url_for('claim_bp.claims', order_by='claim_date', order_dir='asc' if order_by == 'claim_date' and order_dir == 'desc' else 'desc') }}">
+                            Claim Date
+                            {% if order_by == 'claim_date' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ url_for('claim_bp.claims', order_by='status', order_dir='asc' if order_by == 'status' and order_dir == 'desc' else 'desc') }}">
+                            Status
+                            {% if order_by == 'status' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a href="{{ url_for('claim_bp.claims', order_by='claim_amount', order_dir='asc' if order_by == 'claim_amount' and order_dir == 'desc' else 'desc') }}">
+                            Claim Amount
+                            {% if order_by == 'claim_amount' %}
+                                {% if order_dir == 'asc' %}
+                                ⋀
+                                {% else %}
+                                ⋁
+                                {% endif %}
+                            {% else %}
+                            ⋀⋁
+                            {% endif %}
+                        </a>
+                    </th>
+                    
+                    <th class="actions-column">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for claim in claims %}
+                <tr class="{% if claim.status == 'New' %}new-status{% endif %}" data-href="{{ url_for('claim_bp.claim_details', claim_id=claim.claim_id) }}">
+                    <td>{{ claim.claim_id }}</td>
+                    <td><a class="bold-black-hover" href="{{ url_for('client_bp.client_details', client_id=claim.client_id) }}" onclick="event.stopPropagation();">{{ claim.first_name[0] }}. {{ claim.last_name }}</a></td>
+                    <td>{{ claim.policy_type }}</td>
+                    <td>
+                        <a class="bold-black-hover" href="{{ url_for('policy_bp.policy_details', policy_id=claim.policy_id) }}" onclick="event.stopPropagation();">{{ claim.policy_number }}</a>
+                    </td>
+                    <!-- <td>{{ claim.Description }}</td> -->
+                    <td>{{ claim.claim_date }}</td>
+                    <td class="{% if claim.status == 'New' %}font_danger{% endif %}">
+                        {% if claim.status == 'New' %}NEW{% else %}{{ claim.status }}{% endif %}
+                    </td>
+                    <td class="text-center">${{ claim.claim_amount }}</td>
+                    <td class="nowrap-columns actions-column">
+                        <button class="btn btn-sm btn-custom-table btn-custom-table-norm" onclick="toggleDetails('{{ claim.claim_id }}'); event.stopPropagation();">Detail</button>
+                        {% if session.role == 'administrator' %}
+                        <!-- <button class="btn btn-sm btn-custom-table btn-custom-table-norm" onclick="toggleDetails('{{ claim.claim_id }}'); event.stopPropagation();">Detail</button> -->
+                        <a href="{{ url_for('claim_bp.edit_claim', claim_id=claim.claim_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Edit</a>
+                        <form action="{{ url_for('claim_bp.delete_claim', claim_id=claim.claim_id, policy_id=claim.policy_id) }}" method="post" style="display:inline;" onsubmit="return confirmClaimDelete('{{ claim.claim_id }}')" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                        </form>
+                        {% endif %}
+                        {% if session.role == 'insured' and claim.status == 'New' %}
+                        <!-- <button class="btn btn-sm btn-custom-table btn-custom-table-norm" onclick="toggleDetails('{{ claim.claim_id }}'); event.stopPropagation();">Detail</button> -->
+                        <a href="{{ url_for('claim_bp.edit_claim', claim_id=claim.claim_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Edit</a>
+                        <form action="{{ url_for('claim_bp.delete_claim', claim_id=claim.claim_id, policy_id=claim.policy_id) }}" method="post" style="display:inline;" onsubmit="return confirmClaimDelete('{{ claim.claim_id }}')" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr id="details-{{ claim.claim_id }}" style="display: none;">
+                    <td colspan="8">
+                        <div>
+                            <p><strong>Claim ID:</strong> {{ claim.claim_id }}</p>
+                            <p><strong>Claim Date:</strong> {{ claim.claim_date }}</p>
+                            <p><strong>Claim Amount:</strong> {{ claim.claim_amount }}</p>
+                            <p><strong>Status:</strong> {{ claim.status }}</p>
+                            <p><strong>Description:</strong> {{ claim.description }}</p>
+                            <!-- Add more details as needed -->
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+{% endblock %}
+
+{% block card %}
+<div class="referral-card">
+    <div class="referral-card-content">
+        <div class="referral-card-icon">
+            <i class="fas fa-hand-holding-usd fa-3x"></i>
+        </div>
+        <div class="referral-card-text">
+            <h5>Claim Management</h5>
+            <p> Create, read, update, and delete easily.</p>
+        </div>
+        <div>
+            <a href="#" class="btn btn-primary">Explore Policies</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

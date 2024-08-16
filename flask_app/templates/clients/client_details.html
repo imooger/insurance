@@ -1,0 +1,242 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Client Details
+{% endblock %}
+
+{% block main %}
+
+<div class="container-fluid vh-100 d-flex flex-column justify-content-start mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-4">Client Details - {{ client.first_name }} {{ client.last_name }}</h1>
+        {% if session["role"] == 'administrator' %}
+        <form action="{{ url_for('client_bp.delete_client', client_id=client.client_id) }}" method="post" style="display:inline;" onsubmit="return confirmDeleteClient('{{ client.first_name }} {{ client.last_name }}')">
+            <button type="submit" class="btn btn-custom-main btn-custom-delete-client">Delete Client</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="cards-container">
+        <div class="card-profile card1">
+            <div class="card-body p-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <!-- <img src="{{ client.photo }}" alt="Client Photo" class="img-fluid" style="width: 180px; border-radius: 10px;"> -->
+                        <img src="{{ client.photo }}" alt="Client Photo" class="img-fluid" style="max-height: 180px; width: auto; border-radius: 10px;">
+                        <div class="d-flex pt-1">
+                            <a href="{{ url_for('client_bp.edit_client', client_id=client.client_id, next=request.url) }}" class="btn btn-custom-table btn-custom-table-norm mt-2 flex-grow-1">Edit Client</a>
+                        </div>
+                    </div>
+                    <div class="card-main-title flex-grow-1 ms-2">
+                        <h2 class="h5-card">
+                            {% if (client.first_name + ' ' + client.last_name)|length > 28 %}
+                                {{ client.first_name[0] }}. {{ client.last_name }}
+                            {% else %}
+                                {{ client.first_name }} {{ client.last_name }}
+                            {% endif %}
+                        </h2>
+                        <hr>
+                        <p><strong>Email:</strong> {{ client.email }}</p>
+                        <p><strong>Phone: </strong> {{ client.phone }}</p>
+                        <p><strong>DOB:</strong> {{ client.date_of_birth }}</p>
+                        <p><strong>Street:</strong> {{ client.street }}</p>
+                        <p><strong>City:</strong> {{ client.city }}</p>
+                        <p><strong>State, Zip:</strong> {{ client.state }}, {{ client.zip }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-middle card2">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1 "><h2 class="h5-card" style="padding-bottom: 2px;">Premium:</h2></div>
+                <div class="flex-grow-1 text-end "><h2 class="h5-card ms-3" style="padding-bottom: 2px;">${{ "{:,}".format(premium_per_month) }}/month</h2></div>
+            </div>
+            <!-- <h2 class="h5-card ms-3" style="padding-bottom: 2px;">Premium: ${{ "{:,}".format(premium_per_month) }}/month</h2> -->
+            <hr>
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1 ">
+                    <p style="margin-top: 2px;">Active Policies:</p>
+                    <p>Expired Policies:</p>
+                    <p>Premiums (Active Total):</p>
+                    <p data-bs-toggle="tooltip" title="Hello">Total Premiums (Active & Expired):</p>
+
+                    <p>Total Claims:</p>
+                    <p>Loss Ratio:</p>
+                    
+                </div>
+                <div class="flex-grow-1 text-end ">
+                    <p><strong>{{ num_active_policies }}</strong></p>
+                    <p><strong>{{ num_expired_policies }}</strong></p>
+                    <p><strong>$ {{ "{:,}".format(premium_per_month) }}/month</strong></p>
+                    <p><strong>$ {{ "{:,}".format(indv_total_premium) }}</strong></p>
+                    <p><strong>$ {{ "{:,}".format(indv_total_claims) }}</strong></p>
+                    <p class="font_danger"><strong>{{ loss_ratio | round(2)}}%</strong></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-chart card3">
+            <div class="chart-size">
+                <h2>Loss Ratio</h2>
+                <hr>
+                <div>
+                    <canvas id="lossRatioBarChart"
+                        data-total-premium="{{ indv_total_premium }}"
+                        data-total-claim-amount="{{ indv_total_claims }}">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+    <hr class="my-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active text-center" data-bs-toggle="tab" href="#active-policies" style="
+                padding-right: 40px;">Active Policies</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-center" data-bs-toggle="tab" href="#expired-policies" style="
+                padding-right: 40px;">Expired Policies</a>
+            </li>
+        </ul>
+        
+        {% if session["role"] == 'administrator' %}
+        <a href="{{ url_for('policy_bp.add_policy', client_id=client.client_id) }}" class="btn btn-custom-main btn-custom-add-client">Add Policy</a>
+        {% endif %}
+        {% if session["role"] == 'insured' %}
+        <a href="{{ url_for('policy_bp.add_policy', client_id=client.client_id) }}" class="btn btn-custom-main btn-custom-add-client">Request Policy</a>
+        {% endif %}
+    </div>
+
+    <div class="tab-content">
+        <!-- Active Policies Tab -->
+        <div id="active-policies" class="tab-pane fade show active">
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr class="nowrap-columns">
+                            <th>Policy Number</th>
+                            <th>Policy Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Claims</th>
+                            <th>Premium</th>
+                            <th>Months Active</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Activity</th>
+                            
+                            <th class="actions-column">Actions</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for policy in policies %}
+                        {% if policy.activity != 'Expired' %}
+                        <tr data-href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}">
+                            <td><a class="bold-black-hover" href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}">{{ policy.policy_number }}</a></td>
+                            <td>{{ policy.policy_type }}</td>
+                            <td>{{ policy.start_date }}</td>
+                            <td>{{ policy.end_date }}</td>
+                            <td class="text-center">{{ policy.claim_count }}</td>
+                            <td class="text-center">{{ policy.premium_amount }}</td>
+                            <td class="text-center">{{ policy.months_active }}</td> 
+                            <td>{{ policy.total_premium }}</td>
+                            <td class="{% if policy.status == 'Requested' %}font_danger{% endif %}">{{ policy.status }}</td>
+                            <td class="{% if is_policy_ending_within_a_week(policy.end_date) %}font_danger{% endif %}">{% if is_policy_ending_within_a_week(policy.end_date) %}ENDING SOON{% else %}{{ policy.activity }}{% endif %}</td>
+                            {% if session.role == 'administrator' %}
+                            <td class="nowrap-columns actions-column">
+                                <!-- <a href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-norm">Detail</a> -->
+                                <a href="{{ url_for('policy_bp.edit_policy', policy_id=policy.policy_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-add">Edit</a>
+                                <form action="{{ url_for('policy_bp.delete_policy', policy_id=policy.policy_id, client_id=policy.client_id) }}" method="post" style="display:inline;" onsubmit="return confirmPolicyDelete('{{ policy.policy_id }}')">
+                                    <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                                </form>
+                                {% if policy.activity == 'Expired' %}
+                                <form action="{{ url_for('policy_bp.renew_policy', policy_id=policy.policy_id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-renew">Renew</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            {% if session.role == 'insured' %}
+                            <td class="actions-column nowrap-columns">
+                                {% if policy.status != 'Requested' %}
+                                    <a href="{{ url_for('claim_bp.add_claim', policy_id=policy.policy_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Add Claim</a>
+                                {% endif %}
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+                        
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Expired Policies Tab -->
+        <div id="expired-policies" class="tab-pane fade">
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr class="nowrap-columns">
+                            <th>Policy Number</th>
+                            <th>Policy Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th class="text-center">Claims</th>
+                            <th>Premium</th>
+                            <th class="text-center">Months Active</th>
+                            <th>Total</th>
+                            <th>status</th>
+                            <th>Activity</th>
+                            <th>Renewed</th>
+                            {% if session.role == 'administrator' %}
+                            <th class="actions-column">Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for policy in policies %}
+                        {% if policy.activity == 'Expired' %}
+                        <tr data-href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}">
+                            <td><a class="bold-black-hover" href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}">{{ policy.policy_number }}</a></td>
+                            <td>{{ policy.policy_type }}</td>
+                            <td>{{ policy.start_date }}</td>
+                            <td>{{ policy.end_date }}</td>
+                            <td class="text-center">{{ policy.claim_count }}</td>
+                            <td class="text-center">{{ policy.premium_amount }}</td>
+                            <td class="text-center">{{ policy.months_active }}</td>
+                            <td>{{ policy.total_premium }}</td>
+                            <td class="{% if policy.status == 'Requested' %}font_danger{% endif %}">{{ policy.status }}</td>
+                            <td class="{% if is_policy_ending_within_a_week(policy.end_date) %}font_danger{% endif %}">{% if is_policy_ending_within_a_week(policy.end_date) %}ENDING SOON{% else %}{{ policy.activity }}{% endif %}</td>
+                            <td class="renewed-column">{{ policy.renewed }}</td>
+                            {% if session.role == 'administrator' %}
+                            <td class="actions-column nowrap-columns">
+                                <!-- <a href="{{ url_for('policy_bp.policy_details', policy_id=policy.policy_id) }}" class="btn btn-sm btn-custom-table btn-custom-table-norm">Detail</a> -->
+                                <a href="{{ url_for('policy_bp.edit_policy', policy_id=policy.policy_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-add">Edit</a>
+                                <form action="{{ url_for('policy_bp.delete_policy', policy_id=policy.policy_id, client_id=policy.client_id) }}" method="post" style="display:inline;" onsubmit="return confirmPolicyDelete('{{ policy.policy_id }}')">
+                                    <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                                </form>
+                                {% if policy.renewed == 0 %}
+                                <form action="{{ url_for('policy_bp.renew_policy', policy_id=policy.policy_id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-renew">Renew</button>
+                                </form>
+                                {% endif %}
+                                
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

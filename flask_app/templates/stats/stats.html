@@ -1,0 +1,402 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Stats
+{% endblock %}
+
+{% block main %}
+
+
+<style>
+
+    body {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Ensure the cards and columns stretch to full height */
+    .d-flex.align-items-stretch {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .h-100 {
+        height: 100%;
+    }
+
+    .flex-fill {
+        flex: 1 1 auto;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .stat-title-avg {
+        margin-bottom: 0px;
+    }
+
+    .card-avg {
+        padding: 15px;
+    }
+
+    .card {
+        background-color: #ffffff;
+        box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        padding: 0; 
+        text-align: center;
+        flex: 1;
+    }
+
+
+
+</style>
+
+
+<div class="container">
+    <h1 class="mt-4 text-center">Executive Summary</h1>
+    <hr>
+    <div class="row mt-4">
+        <div class="col-md-2 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="circle bg-premium">
+                        ${{ "{:,}".format(stats.total_premium) }}
+                    </h3>
+                    <div class="card-title">Total Premiums</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="circle bg-premium">
+                        <!-- ${{ "{:,}".format(stats.total_premium) }} -->
+                        {% if stats.total_premium %}
+                            {{ (stats.total_claim_amount / stats.total_premium * 100) | round(2) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h3>
+                    <div class="card-title">Loss Ratio</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="circle bg-claim-amount">
+                        ${{ "{:,}".format(stats.total_claim_amount) }}
+                    </h3>
+                    <div class="card-title">Total Claims</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="circle bg-claim">
+                        {{ stats.new_claim_count }}
+                    </h3>
+                    <div class="card-title">New Claims</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="circle bg-client">
+                        {{ stats.client_count }}
+                    </h3>
+                    <div class="card-title custom-size">Total Clients</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="circle bg-policy">
+                        {{ stats.policy_count }}
+                    </h3>
+                    <div class="card-title">Active Policies</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row mt-4 d-flex align-items-stretch">
+        <div class="col-md-3 stat-card">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Total Loss Ratio</h5>
+                    <hr>
+                    <canvas id="premiumVsClaimsChart" 
+                    data-total-premium="{{ stats.total_premium }}" 
+                    data-total-claim-amount="{{ stats.total_claim_amount }}">
+                    </canvas>
+                </div>
+            </div>
+        </div>  
+        <div class="col-md-3 stat-card">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Claim Status Count</h5>
+                    <hr>
+                    <canvas id="claimsCountChart" 
+                        data-new-claim-count="{{ stats.new_claim_count }}" 
+                        data-pending-claim-count="{{ stats.pending_claim_count }}" 
+                        data-paid-claim-count="{{ stats.paid_claim_count }}" 
+                        data-denied-claim-count="{{ stats.denied_claim_count }}">
+                    </canvas>
+                </div>
+            </div>
+        </div>  
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Policies & Claims in {{ stats.current_year }}</h5>
+                    <!-- <canvas id="combinedChart"
+                        data-claim-count-by-month="{% for month, count in stats.claim_count_by_month %}{{ month }},{{ count }}{% if not loop.last %};{% endif %}{% endfor %}"
+                        data-new-policies-count-by-month="{% for month, count in stats.new_policies_count_by_month %}{{ month }},{{ count }}{% if not loop.last %};{% endif %}{% endfor %}">
+                    </canvas> -->
+
+                        <canvas id="combinedChart"
+                            data-new-claim-count-by-month="{{stats.claim_count_by_month|tojson}}"
+                            data-new-policies-count-by-month="{{stats.new_policies_count_by_month|tojson}}">
+                        </canvas>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 d-flex align-items-stretch">
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Policies by Status</h5>
+                        <canvas id="activeVsExpiredStacked" 
+                            data-house-active-premiums="{{ stats.house_active_premiums }}" 
+                            data-auto-active-premiums="{{ stats.auto_active_premiums }}" 
+                            data-life-active-premiums="{{ stats.life_active_premiums }}" 
+                            data-health-active-premiums="{{ stats.health_active_premiums }}" 
+                            data-house-expired-premiums="{{ stats.house_expired_premiums }}" 
+                            data-auto-expired-premiums="{{ stats.auto_expired_premiums }}" 
+                            data-life-expired-premiums="{{ stats.life_expired_premiums }}" 
+                            data-health-expired-premiums="{{ stats.health_expired_premiums }}">
+                        </canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Loss Ratio by Policy Type</h5>
+
+                        <canvas id="lossRatioStacked"
+                            data_paid_house_claim_by_type="{{ stats.paid_house_claim_by_type }}",
+                            data_paid_auto_claim_by_type="{{ stats.paid_auto_claim_by_type }}",
+                            data_paid_life_claim_by_type="{{ stats.paid_life_claim_by_type }}",
+                            data_paid_health_claim_by_type="{{ stats.paid_health_claim_by_type }}",
+                            data_sum_of_house_by_type="{{ stats.sum_of_house_by_type }}",
+                            data_sum_of_auto_by_type="{{ stats.sum_of_auto_by_type }}",
+                            data_sum_of_life_by_type="{{ stats.sum_of_life_by_type }}",
+                            data_sum_of_health_by_type="{{ stats.sum_of_health_by_type }}">
+                        </canvas>
+
+                </div>
+            </div>
+        </div>          
+    </div>
+    
+    
+    <div class="row mt-4">
+        
+        
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Active Approved Policies</h5>
+                    <hr>
+                    <canvas id="policyCountsByType" 
+                        data_house_policy_count="{{ stats.house_policy_count }}",
+                        data_auto_policy_count="{{ stats.auto_policy_count }}",
+                        data_life_policy_count="{{ stats.life_policy_count }}", 
+                        data_health_policy_count="{{ stats.health_policy_count }}",>
+                    </canvas>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Claims by Policy Type</h5>
+                    <hr>
+                    <canvas id="claimsByPolicyTypeChart" 
+                        data_house_claim_count="{{ stats.house_claim_count_by_policy_type }}",
+                        data_auto_claim_count="{{ stats.auto_claim_count_by_policy_type }}",
+                        data_life_claim_count="{{ stats.life_claim_count_by_policy_type }}", 
+                        data_health_claim_count="{{ stats.health_claim_count_by_policy_type }}">
+
+                    </canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Paid vs Denied Claims</h5>
+                    <hr>
+                    <canvas id="clientsPoliciesChart"
+                        data_paid_claim_count="{{ stats.paid_claim_count }}",
+                        data_denied_claim_count="{{ stats.denied_claim_count }}",>
+                    </canvas>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex flex-column h-100">
+                <div class="col-md-12 stat-card flex-fill mb-1">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="circle bg-average-premium">
+                                
+                                ${{ stats.average_premium_per_client}}
+                            </h5>
+                            <div class="card-title-avg">Average Premium per Client</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 stat-card flex-fill mb-1">
+                    <div class="card h-100">
+                        <div class="card-body card-avg text-center">
+                            <h5 class="circle bg-average-claims">
+                                
+                                {{ stats.average_policies_per_client}}
+                            </h5>
+                            <div class="card-title-avg">Average Policies per Client</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 stat-card flex-fill mb-1">
+                    <div class="card h-100">
+                        <div class="card-body card-avg text-center">
+                            <h5 class="circle bg-average-claims">
+                                
+                                {{ stats.average_claims_per_client}}
+                            </h5>
+                            <div class="card-title-avg">Average Claims per Client</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 stat-card flex-fill">
+                    <div class="card h-100">
+                        <div class="card-body card-avg text-center">
+                            <h5 class="circle bg-average-claims">
+                                
+                                ${{ stats.average_claim_amount_per_client}}
+                            </h5>
+                            <div class="card-title-avg">Average Claim Amount per Client</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Loss Ratio by Type in %</h5>
+
+                        <canvas id="lossRatioChartos"
+                            data_house_claims_to_premiums_ratio="{{ stats.house_claims_to_premiums_ratio }}",
+                            data_auto_claims_to_premiums_ratio="{{ stats.auto_claims_to_premiums_ratio }}",
+                            data_life_claims_to_premiums_ratio="{{ stats.life_claims_to_premiums_ratio }}", 
+                            data_health_claims_to_premiums_ratio="{{ stats.health_claims_to_premiums_ratio }}",>
+                        </canvas>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Policies & Claims all time (seasonal)</h5>
+                    <!-- <canvas id="combinedChart"
+                        data-claim-count-by-month="{% for month, count in stats.claim_count_by_month %}{{ month }},{{ count }}{% if not loop.last %};{% endif %}{% endfor %}"
+                        data-new-policies-count-by-month="{% for month, count in stats.new_policies_count_by_month %}{{ month }},{{ count }}{% if not loop.last %};{% endif %}{% endfor %}">
+                    </canvas> -->
+
+                        <canvas id="combinedChartAllTime"
+                            data-all-claims-count-by-month="{{stats.all_claims_count_by_month|tojson}}"
+                            data-all-policies-count-by-month="{{stats.all_policies_count_by_month|tojson}}">
+                        </canvas>
+
+                </div>
+            </div>
+        </div>
+    </div>      
+    <div class="row mt-4">
+        <div class="col-md-4 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="circle bg-average-claims">
+                        <a class="font_danger" href="{{ url_for('client_bp.client_details', client_id=stats.client_with_highest_claim[0]) }}">${{ stats.client_with_highest_claim[1] }}</a><br>
+                    </h5>
+                    <div class="card-title-avg">Client with Highest Claim</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="circle bg-most-policies">
+                        <a class="font_danger" href="{{ url_for('client_bp.client_details', client_id=stats.client_with_highest_premium[0]) }}">${{ stats.client_with_highest_premium[1]}}</a><br>                       
+                    </h5>
+                    <div class="card-title-avg">Client with Highest Premium</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 stat-card">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="circle bg-average-claims">
+                        <a class="font_danger" href="{{ url_for('client_bp.client_details', client_id=stats.client_with_most_claims[0]) }}">{{ stats.client_with_most_claims[1] }} claims</a><br>
+                    </h5>
+                    <div class="card-title-avg">Client with Most Claims</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}
+
+{% block card %} 
+<div class="referral-card">
+    <div class="referral-card-content">
+        <div class="referral-card-icon">
+            <i class="fas fa-chart-bar fa-3x"></i>
+        </div>
+        <div class="referral-card-text">
+            <h5>Executive Summary</h5>
+            <p>High-level overviews and insights.</p>
+        </div>
+        <div>
+            <a href="#" class="btn btn-primary">Explore Policies</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

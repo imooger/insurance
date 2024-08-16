@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Policy Details
+{% endblock %}
+
+{% block main %}
+
+<div class="container-fluid vh-100 d-flex flex-column justify-content-start mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-4">Policy Details</h1>
+        <hr class="my-4">
+        {% if session["role"] == 'administrator' %}
+        <div class="d-flex">
+            <form action="{{ url_for('policy_bp.delete_policy', policy_id=policy.policy_id, client_id=policy.client_id) }}" method="post" style="display:inline;" onsubmit="return confirmPolicyDelete('{{ policy.policy_id }}')">
+                <button type="submit" class="btn btn-custom-main btn-custom-delete-client">Delete Policy</button>
+            </form>
+            {% if policy.activity == 'Expired' %}
+                {% if policy.renewed == 0 %}
+            <form action="{{ url_for('policy_bp.renew_policy', policy_id=policy.policy_id) }}" method="post" style="display:inline;" onsubmit="return confirmPolicyRenew('{{ policy.policy_id }}')">
+                <button type="submit" class="btn btn-custom-main btn-custom-renew-client">Renew Policy</button>
+            </form>
+                {% endif %}
+            {% endif %}
+
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="cards-container">
+        <div class="card-profile card1">
+            <div class="card-body p-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0" style="padding-top: 0;">
+                        {% if policy.policy_type == "House" %}
+                        <i class="fas fa-home policy_fas" style="font-size: 180px; border-radius: 10px;"></i>
+                        {% elif policy.policy_type == "Auto" %}
+                            <i class="fas fa-car policy_fas" style="font-size: 180px; border-radius: 10px;"></i>
+                        {% elif policy.policy_type == "Life" %}
+                            <i class="fas fa-heart policy_fas" style="font-size: 180px; border-radius: 10px;"></i>
+                        {% elif policy.policy_type == "Health" %}
+                            <i class="fas fa-user-md policy_fas" style="font-size: 180px; border-radius: 10px;"></i>
+                        {% endif %}
+                        {% if session["role"] == 'administrator' %}
+                        <div class="d-flex pt-1">
+                            <a href="{{ url_for('policy_bp.edit_policy', policy_id=policy.policy_id, next=request.url) }}" class="btn btn-custom-table btn-custom-table-norm mt-2 flex-grow-1">Edit Policy</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- Columns for policy information -->
+                    <div class="card-main-title flex-grow-1 ms-2">
+                        <h2>{{ policy.policy_type }} - {{ policy.policy_id}} - {{policy.policy_number }}</h2>
+                        <hr>
+                        <p><strong>Policy ID:</strong> {{ policy.policy_id }}</p>
+                        <p><strong>Policy Number:</strong> {{ policy.policy_number }}</p>
+                        <p>
+                            <strong>Renewed:</strong>
+                            {% if policy.renewed != 0 %}
+                                <span class="font_danger">Yes</span>
+                            {% else %}
+                                <span class="font_danger">No</span>
+                            {% endif %}
+                        </p>
+                        <!-- <p>Client ID: {{ policy.client_id }}</p> -->
+                        <!-- <p>Client: {{ policy.first_name }} {{policy.last_name}}</p> -->
+                        <p><strong>Client:</strong> 
+                            <a href="{{ url_for('client_bp.client_details', client_id=policy.client_id) }}">
+                                {% if (policy.first_name + ' ' + policy.last_name)|length > 28 %}
+                                {{ policy.first_name[0] }}. {{ policy.last_name }}
+                                {% else %}
+                                {{ policy.first_name }} {{ policy.last_name }}
+                                {% endif %}
+                            </a>                            
+                        </p>
+                        <p><strong>DOB:</strong> {{policy.date_of_birth}}</p>
+                        <p><strong>phone:</strong> {{policy.phone}}</p>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-middle card2">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h2 class="h5-card" style="padding-bottom: 2px;">Premium Total:</h2>
+                </div>
+                <div class="flex-grow-1 text-end">
+                    <h2 class="h5-card ms-3" style="padding-bottom: 2px;">${{ "{:,}".format(total_premium) }} - {{ policy.status if policy.status == 'Requested' else policy.activity }}</h2>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <p style="margin-top: 2px;">Premium:</p>
+                    <p>Policy Start:</p>
+                    <p>Policy End:</p>
+                    <p>status:</p>
+                    <p>activity:</p>
+                    <p>Loss Ratio:</p>
+                   
+                </div>
+                <div class="flex-grow-1 text-end">
+                    <p><strong>$ {{ "{:,}".format(policy.premium_amount) }}/month</strong></p>
+                    <p><strong>{{ policy.start_date }}</strong></p>
+                    <p><strong>{{ policy.end_date }}</strong></p>
+                    <p><strong>{{ policy.status }}</strong></p>
+                    <p><strong>{{ policy.activity }}</strong></p>
+                    <p class="font_danger"><strong>{{ loss_ratio | round(2)}}%</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="card-chart card3">               
+            <h2>Loss Ratio Chart</h2>
+            <hr>
+            <div style="width: 100%; height: 100%; overflow: hidden;">
+                <canvas id="lossRatioBarChart"
+                    data-total-premium="{{ total_premium }}"
+                    data-total-claim-amount="{{ total_claims }}">
+                </canvas>           
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Claims</h2>
+        {% if session.role == 'administrator' %}
+        <a href="{{ url_for('claim_bp.add_claim', policy_id=policy.policy_id) }}" class="btn btn-custom-main btn-custom-add-client">Add Claim</a>
+        {% endif %}
+        {% if session.role == 'insured' and policy.activity == 'Active' and policy.status != 'Requested' %}
+        <a href="{{ url_for('claim_bp.add_claim', policy_id=policy.policy_id) }}" class="btn btn-custom-main btn-custom-add-client">Add Claim</a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table custom-table">
+            <thead>
+                <tr class="nowrap-columns">
+                    <th>Claim ID</th>
+                    <th>description</th>
+                    <th>Claim Amount</th>
+                    <th>Claim Date</th>
+                    <th>Status</th>
+                    <th class="actions-column">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for claim in claims %}
+                <tr data-href="{{ url_for('claim_bp.claim_details', claim_id=claim.claim_id) }}">
+                    <td>{{ claim.claim_id }}</td>
+                    <td>{{ claim.description }}</td>
+                    <td>{{ claim.claim_amount }}</td>
+                    <td>{{ claim.claim_date }}</td>
+                    <td class="{% if claim.status == 'New' %}font_danger{% endif %}">
+                        {% if claim.status == 'New' %}NEW{% else %}{{ claim.status }}{% endif %}
+                    </td>
+                    <td class="nowrap-columns actions-column">
+                        {% if session.role == 'administrator' %}
+                        
+                        <a href="{{ url_for('claim_bp.edit_claim', claim_id=claim.claim_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Edit</a>
+                        <form action="{{ url_for('claim_bp.delete_claim', claim_id=claim.claim_id, policy_id=claim.policy_id) }}" method="post" style="display:inline;" onsubmit="return confirmClaimDelete('{{ claim.claim_id }}')" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                        </form>
+                        {% endif %}
+                        {% if session.role == 'insured' and claim.status == 'New' %}
+                        
+                        <a href="{{ url_for('claim_bp.edit_claim', claim_id=claim.claim_id, next=request.url) }}" class="btn btn-sm btn-custom-table btn-custom-table-add" onclick="event.stopPropagation();">Edit</a>
+                        <form action="{{ url_for('claim_bp.delete_claim', claim_id=claim.claim_id, policy_id=claim.policy_id) }}" method="post" style="display:inline;" onsubmit="return confirmClaimDelete('{{ claim.claim_id }}')" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-custom-table btn-custom-table-danger">Delete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}
+
