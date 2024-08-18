@@ -2,7 +2,7 @@
 <div align="center"><img src="insurance_logo.png" alt="Insurance Logo"></div>
 
 ## What is it?
-**insur⟑nce** is a final web application project for IT-networks, i's a fully responsive web application that **demonstrates** the functionalities of an insurance management system. It is designed to efficiently manage insurance processes, including handling client requests, policies, claims, and administrative tasks. The application focuses on usability, security, and in-detail data insights to deliver a reliable solution for insurance management.
+**insur⟑nce** is a final web application project for IT-networks, it's a fully responsive web application that **demonstrates** the functionalities of an insurance management system. It is designed to efficiently manage insurance processes, including handling client requests, policies, claims, and administrative tasks. The application focuses on usability, security, and in-detail data insights to deliver a reliable solution for insurance management.
 
 <div align="center"><img src="client_detail.png" alt="Insurance Logo"></div>
 
