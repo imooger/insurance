@@ -160,8 +160,8 @@ The Executive Dashboard provides a high-level overview of key metrics and insigh
 
 Big thanks to the websites for the profile images! Check them out:
 
-- [MDBootstrap](https://mdbootstrap.com)
 - [Pinterest](https://pinterest.com)
+- 
 
 ---
 ## License
