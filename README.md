@@ -161,7 +161,7 @@ The Executive Dashboard provides a high-level overview of key metrics and insigh
 Big thanks to the websites for the profile images! Check them out:
 
 - [Pinterest](https://pinterest.com)
-- 
+
 
 ---
 ## License
