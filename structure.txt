@@ -46,11 +46,6 @@ Insurance
 │   │   │   ├── policy_details.html
 │   │   │   ├── add_policy.html
 │   │   │   ├── edit_policy.html
-│   │   ├── claims/
-│   │   │   ├── claim_details.html
-│   │   │   ├── add_claim.html
-│   │   │   ├── policies.html
-│   │   │   ├── edit_claim.html
 │   │   ├── stats/
 │   │   │   ├── client_stats.html
 │   │   │   ├── stats.html
