@@ -156,9 +156,14 @@ This section will guide you through the basic functionalities of the insur⟑nce
 The Executive Dashboard provides a high-level overview of key metrics and insights, helping administrators make informed decisions based on real-time data. It includes visualizations like pie charts, bar charts, averages and graphs to depict trends and statistics crucial for strategic planning.
 
 ---
+### Acknowledgments
 
+Big thanks to the websites for the profile images! Check them out:
 
+- [MDBootstrap](https://mdbootstrap.com)
+- [Pinterest](https://pinterest.com)
 
+---
 ## License
 
 MIT
