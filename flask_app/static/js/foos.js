@@ -1,4 +1,21 @@
+// Validate age 18-150?? 
+function validateAge() {
+    const dob = new Date(document.getElementById('date_of_birth').value);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    const dayDiff = today.getDate() - dob.getDate();
 
+    if (age < 18) {
+        alert("We are sorry, you must be 18 or older to be eligible for insurance.");
+        return false;
+    } else if (age > 150) {
+        alert("We are sorry, you are not eligible for insurance.");
+        return false;
+    }
+
+    return true;
+}
 
 // Button clink - > the browser will navigate back to the previous page they visited.
 function goBack() {
