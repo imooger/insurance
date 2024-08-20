@@ -7,7 +7,7 @@ Add Client
 {% block main %}
 <div class="container form-frame">
     <h1 class="text-center form-h1">Add Client</h1>
-    <form method="post" class="row g-3" id="contact-form" role="form">
+    <form method="post" class="row g-3" id="contact-form" role="form" onsubmit="return validateAge()">
         <div class="col-md-6">
             <div class="form-group">
                 <label for="first_name" class="form-label">FIRST NAME *</label>
@@ -61,4 +61,5 @@ Add Client
         </div>
     </form>
 </div>
+<script src="{{ url_for('static', filename='foos.js') }}"></script>
 {% endblock %}
