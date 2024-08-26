@@ -176,7 +176,7 @@ Stats
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title text-center">Policies by Status</h5>
+                    <h5 class="card-title text-center">Policy Count by Status</h5>
                         <canvas id="activeVsExpiredStacked" 
                             data-house-active-premiums="{{ stats.house_active_premiums }}" 
                             data-auto-active-premiums="{{ stats.auto_active_premiums }}" 
@@ -193,7 +193,7 @@ Stats
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title text-center">Loss Ratio by Policy Type</h5>
+                    <h5 class="card-title text-center">Loss Ratio by Policy Type in $</h5>
 
                         <canvas id="lossRatioStacked"
                             data_paid_house_claim_by_type="{{ stats.paid_house_claim_by_type }}",
