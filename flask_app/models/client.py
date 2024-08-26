@@ -9,32 +9,47 @@ class ClientManager:
     """
     
     @staticmethod
-    def get_all_clients(order_by="first_name", order_dir="asc"):
+    def get_all_clients(order_by="active_policies_count", order_dir="asc"):
         with get_db_connection() as conn:
             order_clause = f"{order_by} {order_dir}"
 
             clients = conn.execute(
                 f"""
-                SELECT clients.*, 
-                    COUNT(DISTINCT claims.claim_id) AS claim_count,
-                    COUNT(CASE WHEN insurance_policies.end_date > date('now') AND insurance_policies.status = 'Approved' THEN 1 END) AS active_policies_count,
-                    SUM(CASE 
-                        WHEN insurance_policies.status = 'Approved' 
-                        THEN (julianday(MIN(insurance_policies.end_date, date('now'))) - julianday(insurance_policies.start_date)) / 30.0 * insurance_policies.premium_amount
-                        ELSE 0 
-                    END) AS indv_total_premium,
-                    SUM(CASE 
-                        WHEN insurance_policies.status = 'Approved' AND end_date > date('now')
-                        THEN insurance_policies.premium_amount 
-                        ELSE 0 
-                    END) AS monthly_premium,
-                    SUM(CASE WHEN claims.status = 'Paid' THEN claims.claim_amount ELSE 0 END) AS paid_claim_sum
+                WITH policy_summary AS (
+                    SELECT clients.client_id,
+                        COUNT(DISTINCT CASE 
+                            WHEN insurance_policies.end_date > date('now') 
+                            THEN insurance_policies.policy_id 
+                            END) AS active_policies_count,
+                        SUM(CASE 
+                            WHEN insurance_policies.status = 'Approved' 
+                                    AND insurance_policies.end_date > date('now')
+                            THEN insurance_policies.premium_amount 
+                            ELSE 0 
+                            END) AS monthly_premium
+                    FROM clients
+                    LEFT JOIN insurance_policies ON clients.client_id = insurance_policies.client_id
+                    WHERE clients.first_name != 'Admin'
+                    GROUP BY clients.client_id
+                ),
+                claim_summary AS (
+                    SELECT insurance_policies.client_id,
+                        COUNT(DISTINCT claims.claim_id) AS claim_count,
+                        SUM(CASE WHEN claims.status = 'Paid' THEN claims.claim_amount ELSE 0 END) AS paid_claim_sum
+                    FROM insurance_policies
+                    LEFT JOIN claims ON insurance_policies.policy_id = claims.policy_id
+                    GROUP BY insurance_policies.client_id
+                )
+                SELECT clients.*,
+                    COALESCE(claim_summary.claim_count, 0) AS claim_count,
+                    COALESCE(policy_summary.active_policies_count, 0) AS active_policies_count,
+                    COALESCE(policy_summary.monthly_premium, 0) AS monthly_premium,
+                    COALESCE(claim_summary.paid_claim_sum, 0) AS paid_claim_sum
                 FROM clients
-                LEFT JOIN insurance_policies ON clients.client_id = insurance_policies.client_id
-                LEFT JOIN claims ON insurance_policies.policy_id = claims.policy_id
-                WHERE clients.first_name != 'Admin'
-                GROUP BY clients.client_id
-                ORDER BY {order_clause}
+                LEFT JOIN policy_summary ON clients.client_id = policy_summary.client_id
+                LEFT JOIN claim_summary ON clients.client_id = claim_summary.client_id
+                WHERE clients.first_name != 'Admin';
+                
                 """
             ).fetchall()
         return clients
