@@ -363,6 +363,38 @@ class Statistics:
 
         return expired_policy_count
 
+    @staticmethod
+    def get_active_policies_count():
+        with get_db_connection() as conn:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            count = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM insurance_policies
+                WHERE status = 'Approved'
+                AND start_date <= ?
+                AND end_date >= ?
+                """,
+                (current_date, current_date)
+            ).fetchone()[0]
+        return count
+
+    @staticmethod
+    def get_expired_policies_count():
+        with get_db_connection() as conn:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            count = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM insurance_policies
+                WHERE status = 'Approved'
+                AND end_date < ?
+                """,
+                (current_date,)
+            ).fetchone()[0]
+        return count
+
+
 
 
 

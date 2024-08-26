@@ -18,24 +18,27 @@ def policies():
     user_email = session["email"]
     order_by = request.args.get("order_by", "end_date")
     order_dir = request.args.get("order_dir", "asc")
+    page = int(request.args.get("page", 1))
+    per_page = 10
     reverse = (order_dir == "desc")
     current_year = datetime.now().year
 
     if user_role == "administrator":
-        policies = [dict(policy) for policy in PolicyService.get_all_policies_for_admin()]
+        policies = [dict(policy) for policy in PolicyService.get_all_policies_for_admin(order_by=order_by, order_dir=order_dir, page=page)]
+        total_policies_count = PolicyService.get_policy_count()
     elif user_role == "insured":
         policies = [dict(policy) for policy in PolicyService.get_policies_for_insured(user_email)]
+        total_policies_count = len(policies)  
     else:
         flash("Unauthorized access", "danger")
         return redirect(url_for("index"))
 
     for policy in policies:
         policy['total_premium'] = float(PolicyManager.get_premium_for_policy(policy['policy_id']))
+
     policies.sort(key=lambda x: x['total_premium'] if order_by == "total_premium" else x.get(order_by, ""), reverse=reverse)
 
     if user_role == "administrator":
-        active_count = sum(1 for policy in policies if policy['activity'] == 'Active' and policy['status'] == 'Approved')
-        expired_count = sum(1 for policy in policies if policy['activity'] == 'Expired' and policy['status'] == 'Approved')
 
         stats = {
             "current_year": current_year,
@@ -45,14 +48,32 @@ def policies():
             "life_policy_count": Statistics.get_active_policy_count_by_type("Life"),
             "health_policy_count": Statistics.get_active_policy_count_by_type("Health"),
             "new_policies_count_by_month": Statistics.get_new_policies_count_by_month(),
-            "active_policy_count": active_count,
-            "expired_policy_count": expired_count,
+            "active_policy_count": Statistics.get_active_policies_count(),
+            "expired_policy_count": Statistics.get_expired_policies_count()
         }
 
-        return render_template("policies/policies.html", policies=policies, stats=stats, order_by=order_by, order_dir=order_dir, is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week)
+        total_pages = (total_policies_count + per_page - 1) // per_page
 
-    return render_template("policies/policies.html", policies=policies, order_by=order_by, order_dir=order_dir, is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week)
+        return render_template(
+            "policies/policies.html",
+            policies=policies,
+            stats=stats,
+            order_by=order_by,
+            order_dir=order_dir,
+            is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week,
+            page=page,
+            total_pages=total_pages
+        )
 
+    return render_template(
+        "policies/policies.html",
+        policies=policies,
+        order_by=order_by,
+        order_dir=order_dir,
+        is_policy_ending_within_a_week=PolicyManager.is_policy_ending_within_a_week,
+        page=page,
+        total_pages=1  # Placeholder for insured users if pagination is needed
+    )
 
 
 @policy_bp.route("/policy/<int:policy_id>", methods=["GET"])

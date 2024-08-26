@@ -9,8 +9,9 @@ class ClientManager:
     """
     
     @staticmethod
-    def get_all_clients(order_by="active_policies_count", order_dir="asc"):
+    def get_all_clients(page=1, per_page=10, order_by="active_policies_count", order_dir="asc"):
         with get_db_connection() as conn:
+            offset = (page - 1) * per_page
             order_clause = f"{order_by} {order_dir}"
 
             clients = conn.execute(
@@ -23,10 +24,15 @@ class ClientManager:
                             END) AS active_policies_count,
                         SUM(CASE 
                             WHEN insurance_policies.status = 'Approved' 
-                                    AND insurance_policies.end_date > date('now')
+                                AND insurance_policies.end_date > date('now')
                             THEN insurance_policies.premium_amount 
                             ELSE 0 
-                            END) AS monthly_premium
+                            END) AS monthly_premium,
+                        SUM(CASE 
+                            WHEN insurance_policies.status = 'Approved' 
+                            THEN (julianday(MIN(insurance_policies.end_date, date('now'))) - julianday(insurance_policies.start_date)) / 30.0 * insurance_policies.premium_amount
+                            ELSE 0 
+                            END) AS indv_total_premium
                     FROM clients
                     LEFT JOIN insurance_policies ON clients.client_id = insurance_policies.client_id
                     WHERE clients.first_name != 'Admin'
@@ -44,15 +50,22 @@ class ClientManager:
                     COALESCE(claim_summary.claim_count, 0) AS claim_count,
                     COALESCE(policy_summary.active_policies_count, 0) AS active_policies_count,
                     COALESCE(policy_summary.monthly_premium, 0) AS monthly_premium,
+                    COALESCE(policy_summary.indv_total_premium, 0) AS indv_total_premium,
                     COALESCE(claim_summary.paid_claim_sum, 0) AS paid_claim_sum
                 FROM clients
                 LEFT JOIN policy_summary ON clients.client_id = policy_summary.client_id
                 LEFT JOIN claim_summary ON clients.client_id = claim_summary.client_id
-                WHERE clients.first_name != 'Admin';
-                
+                WHERE clients.first_name != 'Admin'
+                ORDER BY {order_clause}
+                LIMIT {per_page} OFFSET {offset}
                 """
             ).fetchall()
-        return clients
+
+            total_clients = conn.execute(
+                "SELECT COUNT(*) FROM clients WHERE first_name != 'Admin'"
+            ).fetchone()[0]
+
+        return clients, total_clients
 
     @staticmethod
     def get_client_by_id(client_id):

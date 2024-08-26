@@ -41,8 +41,10 @@ def in_dex():
 def clients():
     order_by = request.args.get("order_by", "first_name")
     order_dir = request.args.get("order_dir", "asc")
+    page = int(request.args.get("page", 1))  # Get the current page from the query parameter
+    per_page = 10  # Number of clients per page
 
-    clients = ClientManager.get_all_clients()
+    clients, total_clients = ClientManager.get_all_clients(page=page, per_page=per_page, order_by=order_by, order_dir=order_dir)
     
     clients_with_details = []
     for client in clients:
@@ -53,11 +55,11 @@ def clients():
         active_policies = [policy for policy in client_policies if policy['activity'] == 'Active']
         expired_policies = [policy for policy in client_policies if policy['activity'] == 'Expired']
 
-        indv_total_premium = round(PolicyManager.get_sum_of_earned_premiums_by_client_id(client["client_id"]),2)
+        indv_total_premium = round(PolicyManager.get_sum_of_earned_premiums_by_client_id(client["client_id"]), 2)
         
         # Fetch claims for the client
         claims = ClaimRetrieval.get_claims_for_client(client['client_id'])
-        premium_per_month = round(PolicyManager.get_premium_per_month_on_active_policies(client["client_id"]),2)
+        premium_per_month = round(PolicyManager.get_premium_per_month_on_active_policies(client["client_id"]), 2)
         
         # Calculate sum of paid claims
         paid_claim_sum = sum([claim['claim_amount'] for claim in claims if claim['status'] == 'Paid'])
@@ -66,9 +68,7 @@ def clients():
         client_dict.update({
             'indv_total_premium': indv_total_premium,
             'premium_per_month': premium_per_month,
-            
             'paid_claim_sum': paid_claim_sum,
-
             'active_policies': active_policies,
             'expired_policies': expired_policies,
             'claims': claims
@@ -82,6 +82,7 @@ def clients():
     else:
         clients_with_details = sorted(clients_with_details, key=lambda x: x[order_by], reverse=(order_dir == 'desc'))
 
+    total_pages = (total_clients + per_page - 1) // per_page  # Calculate total number of pages
 
     # Consolidate statistics
     stats = {
@@ -104,7 +105,8 @@ def clients():
         "claim_count": Statistics.get_claim_count(),
     }
     
-    return render_template("clients/clients.html", clients=clients_with_details, stats=stats, order_by=order_by, order_dir=order_dir)
+    return render_template("clients/clients.html", clients=clients_with_details, stats=stats, order_by=order_by, order_dir=order_dir, page=page, total_pages=total_pages)
+
 
 
 @client_bp.route("/client", methods=["GET"])

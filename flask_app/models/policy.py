@@ -5,23 +5,52 @@ from datetime import date, timedelta, datetime
 class PolicyService:
 
     @staticmethod
-    def get_all_policies_for_admin(order_by="end_date", order_dir="asc"):
+    def get_policy_count():
+        with get_db_connection() as conn:
+            count = conn.execute(
+                """
+                SELECT COUNT(*) AS total_count
+                FROM insurance_policies
+                """
+            ).fetchone()
+        return count["total_count"]
+
+    @staticmethod
+    def get_policies_for_admin_paginated(page=1, per_page=10, order_by="end_date", order_dir="asc"):
+        offset = (page - 1) * per_page
         with get_db_connection() as conn:
             if order_by == "policy_number":
                 order_by_clause = f"CAST({order_by} AS INTEGER) {order_dir}"
             else:
                 order_by_clause = f"{order_by} {order_dir}"
-            policies = conn.execute(
+
+            rows = conn.execute(
                 f"""
                 SELECT insurance_policies.*, clients.first_name, clients.last_name, clients.date_of_birth,
                     CASE WHEN end_date >= date('now') THEN 'Active' ELSE 'Expired' END AS activity,
-                    (SELECT COUNT(*) FROM claims WHERE claims.policy_id = insurance_policies.policy_id) AS claim_count
+                    (SELECT COUNT(*) FROM claims WHERE claims.policy_id = insurance_policies.policy_id) AS claim_count,
+                    SUM(CASE 
+                        WHEN insurance_policies.status = 'Approved' 
+                            AND insurance_policies.end_date > date('now')
+                        THEN insurance_policies.premium_amount 
+                        ELSE 0 
+                    END) AS total_premium
                 FROM insurance_policies
                 JOIN clients ON insurance_policies.client_id = clients.client_id
+                GROUP BY insurance_policies.policy_id, clients.client_id
                 ORDER BY {order_by_clause}
-                """
+                LIMIT ? OFFSET ?
+                """,
+                (per_page, offset)
             ).fetchall()
+
+            policies = [dict(row) for row in rows]
         return policies
+
+    @staticmethod
+    def get_all_policies_for_admin(order_by="end_date", order_dir="asc", page=1):
+        return PolicyService.get_policies_for_admin_paginated(page=page, order_by=order_by, order_dir=order_dir)
+
 
     @staticmethod
     def get_policies_for_insured(email, order_by="end_date", order_dir="asc"):

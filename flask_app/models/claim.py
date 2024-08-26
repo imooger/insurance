@@ -3,8 +3,9 @@ from . import get_db_connection
 class ClaimRetrieval:
 
     @staticmethod
-    def get_all_claims_for_admin(order_by="claim_date", order_dir="asc"):
+    def get_all_claims_for_admin(page=1, per_page=10, order_by="claim_date", order_dir="asc"):
         with get_db_connection() as conn:
+            offset = (page - 1) * per_page
             if order_by == "policy_number":
                 order_by_clause = f"CAST({order_by} AS INTEGER) {order_dir}"
             else:
@@ -12,35 +13,62 @@ class ClaimRetrieval:
             claims = conn.execute(
                 f"""
                 SELECT claims.*, insurance_policies.client_id, clients.first_name, clients.last_name, 
-                       insurance_policies.policy_number, insurance_policies.policy_type
+                    insurance_policies.policy_number, insurance_policies.policy_type
                 FROM claims
                 JOIN insurance_policies ON claims.policy_id = insurance_policies.policy_id
                 JOIN clients ON insurance_policies.client_id = clients.client_id
                 ORDER BY {order_by_clause}
+                LIMIT {per_page} OFFSET {offset}
                 """
             ).fetchall()
-        return claims
+
+            total_claims = conn.execute(
+                f"""
+                SELECT COUNT(*) 
+                FROM claims
+                JOIN insurance_policies ON claims.policy_id = insurance_policies.policy_id
+                JOIN clients ON insurance_policies.client_id = clients.client_id
+                """
+            ).fetchone()[0]
+        
+        return claims, total_claims
 
     @staticmethod
-    def get_claims_for_insured(email, order_by="claim_date", order_dir="asc"):
+    def get_claims_for_insured(email, page=1, per_page=10, order_by="claim_date", order_dir="asc"):
+        offset = (page - 1) * per_page
         with get_db_connection() as conn:
             if order_by == "policy_number":
                 order_by_clause = f"CAST({order_by} AS INTEGER) {order_dir}"
             else:
                 order_by_clause = f"{order_by} {order_dir}"
+
             claims = conn.execute(
                 f"""
                 SELECT claims.*, insurance_policies.client_id, clients.first_name, clients.last_name, 
-                       insurance_policies.policy_number, insurance_policies.policy_type
+                    insurance_policies.policy_number, insurance_policies.policy_type
                 FROM claims
                 JOIN insurance_policies ON claims.policy_id = insurance_policies.policy_id
                 JOIN clients ON insurance_policies.client_id = clients.client_id
                 WHERE clients.email = ?
                 ORDER BY {order_by_clause}
+                LIMIT ? OFFSET ?
                 """,
-                (email,),
+                (email, per_page, offset)
             ).fetchall()
-        return claims
+
+            total_claims = conn.execute(
+                f"""
+                SELECT COUNT(*) 
+                FROM claims
+                JOIN insurance_policies ON claims.policy_id = insurance_policies.policy_id
+                JOIN clients ON insurance_policies.client_id = clients.client_id
+                WHERE clients.email = ?
+                """,
+                (email,)
+            ).fetchone()[0]
+            
+        return claims, total_claims
+
 
     @staticmethod
     def get_claim_by_id(claim_id):

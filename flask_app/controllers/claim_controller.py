@@ -16,12 +16,15 @@ def claims():
 
     order_by = request.args.get("order_by", "claim_date")
     order_dir = request.args.get("order_dir", "asc")
+    page = int(request.args.get("page", 1))  # Get current page from query parameter
+    per_page = 10  # Number of claims per page
     current_year = datetime.now().year
 
     if user_role == "administrator":
-        claims = ClaimRetrieval.get_all_claims_for_admin(order_by=order_by, order_dir=order_dir)
-        #print(len(claims))  # claims data passed to the template)
-        #print(Statistics.get_claim_count_by_status("New"))
+        claims, total_claims = ClaimRetrieval.get_all_claims_for_admin(page=page, per_page=per_page, order_by=order_by, order_dir=order_dir)
+        
+        total_pages = (total_claims + per_page - 1) // per_page  # Calculate total number of pages
+        
         stats = {
             "current_year": current_year,
             "claim_count_by_month": Statistics.get_claim_count_by_month(),
@@ -34,11 +37,14 @@ def claims():
             "life_claim_count_by_policy_type": Statistics.get_claim_count_by_policy_type('Life'),
             "health_claim_count_by_policy_type": Statistics.get_claim_count_by_policy_type('Health')
         }
-        return render_template("claims/claims.html", claims=claims, stats=stats, order_by=order_by, order_dir=order_dir)
+        return render_template("claims/claims.html", claims=claims, stats=stats, order_by=order_by, order_dir=order_dir, page=page, total_pages=total_pages)
+    
     elif user_role == "insured":
-        claims = ClaimRetrieval.get_claims_for_insured(user_email, order_by=order_by, order_dir=order_dir)
-        #print(claims)  # claims data passed to the template
-        return render_template("claims/claims.html", claims=claims, order_by=order_by, order_dir=order_dir)
+        claims, total_claims = ClaimRetrieval.get_claims_for_insured(user_email, page=page, per_page=per_page, order_by=order_by, order_dir=order_dir)
+        
+        total_pages = (total_claims + per_page - 1) // per_page  # Calculate total number of pages
+
+        return render_template("claims/claims.html", claims=claims, order_by=order_by, order_dir=order_dir, page=page, total_pages=total_pages)
 
 
 
