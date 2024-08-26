@@ -42,7 +42,7 @@ def clients():
     order_by = request.args.get("order_by", "first_name")
     order_dir = request.args.get("order_dir", "asc")
 
-    clients = ClientManager.get_all_clients(order_by=order_by, order_dir=order_dir)
+    clients = ClientManager.get_all_clients()
     
     clients_with_details = []
     for client in clients:
