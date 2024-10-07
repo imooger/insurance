@@ -12,14 +12,22 @@ Welcome
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
-        height: 100vh;
+        height: 90vh; 
         display: flex;
     }
 
     h1 {
-        color : #606060  !important;
+        color: #606060 !important;
+        /* font-size: 1.3em;  */
     }
 
+    .welcome-frame {
+        transform: scale(0.9); 
+    }
+
+    .container h5, .container p, .container ul {
+        font-size: 0.9em; 
+    }
 </style>
 
 <div class="container welcome-frame">
@@ -48,16 +56,16 @@ Welcome
         <li>Implementing the <strong>MVC</strong> (Model-View-Controller) pattern for enhanced scalability and efficient code organization.</li>
         <li>Some of the libraries used: <strong>Flask, Jinja2, Werkzeug, SQLite3 ...</strong></li>
         <li>Using an <strong>SQL database</strong> ensuring seamless management and overview of insured clients, policies, and claims.</li>
-        
     </ul>
+    
     <p><strong>HOW TO SIGN IN:</strong></p>
     <ul>
-        <li>To sign in as admin use <strong>email: admin, pasword: admin</strong></li>
+        <li>To sign in as admin use <strong>email: admin, password: admin</strong></li>
         <li>To sign in as any of the fictional characters use</li>
         <li><strong>email: first_name@last_name.com, password: name</strong></li>
         <li>THANK YOU FOR YOUR TIME</li>
-        
     </ul>
+    
     <a href="/login" class="btn btn-form btn-submit option-link">Sign in</a>
     <a href="/register" class="btn btn-form btn-submit option-link">Register Client</a>
     <!-- <a href="/contact_us" class="btn btn-form btn-submit option-link">Contact Me</a> -->
