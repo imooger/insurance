@@ -42,9 +42,5 @@ POTENTIAL IMPROVEMENTS
 - Add tests
 
 
-########################################
-LESSONS LEARNED
-########################################
 
-Always create an ER diagram before starting any coding!
 
